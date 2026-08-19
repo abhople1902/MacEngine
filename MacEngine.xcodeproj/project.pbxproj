@@ -30,6 +30,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AB1000010000000000000001 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		DCB002A830364DB90000F690 /* MacEngine */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = MacEngine;
@@ -75,6 +80,7 @@
 		DCB0029D30364DB90000F690 = {
 			isa = PBXGroup;
 			children = (
+				AB1000010000000000000001 /* Shared */,
 				DCB002A830364DB90000F690 /* MacEngine */,
 				DCB002B630364DBC0000F690 /* MacEngineTests */,
 				DCB002C030364DBC0000F690 /* MacEngineUITests */,
@@ -108,6 +114,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				AB1000010000000000000001 /* Shared */,
 				DCB002A830364DB90000F690 /* MacEngine */,
 			);
 			name = MacEngine;

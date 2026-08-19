@@ -1,0 +1,68 @@
+//
+//  EventLogView.swift
+//  MacEngine
+//
+//  Lifecycle events received over DistributedNotificationCenter.
+//
+
+import SwiftUI
+
+struct EventLogView: View {
+    let records: [MonitoringEventRecord]
+
+    var body: some View {
+        if records.isEmpty {
+            Text("No lifecycle events yet.")
+                .font(.metricCaption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 6)
+        } else {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(records.prefix(6)) { record in
+                    HStack(spacing: 10) {
+                        Image(systemName: record.event.symbolName)
+                            .foregroundStyle(record.event.tint)
+                            .frame(width: 16)
+                        Text(record.event.displayName)
+                            .font(.system(.caption))
+                        if let detail = record.detail {
+                            Text(detail)
+                                .font(.diagnosticMono)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(record.timestamp, format: .dateTime.hour().minute().second())
+                            .font(.diagnosticMono)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.vertical, 5)
+                    if record.id != records.prefix(6).last?.id {
+                        Divider()
+                    }
+                }
+            }
+        }
+    }
+}
+
+extension MonitoringEvent {
+    var symbolName: String {
+        switch self {
+        case .monitoringStarted: "play.circle"
+        case .monitoringStopped: "stop.circle"
+        case .serviceUnavailable: "exclamationmark.triangle"
+        case .serviceRecovered: "arrow.clockwise.circle"
+        case .highCPUDetected: "flame"
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .monitoringStarted, .serviceRecovered: .green
+        case .monitoringStopped: .secondary
+        case .serviceUnavailable: .red
+        case .highCPUDetected: .orange
+        }
+    }
+}
