@@ -15,7 +15,7 @@ struct MacEngineApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(model: appDelegate.dashboard)
+            ContentView(model: appDelegate.dashboard, inspector: appDelegate.inspector)
         }
         .defaultSize(width: 820, height: 720)
         .windowResizability(.contentMinSize)

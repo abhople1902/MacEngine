@@ -18,10 +18,18 @@ nonisolated struct ClientChannel: @unchecked Sendable {
     let connection: NSXPCConnection
 
     func send(_ payload: Data) {
+        client()?.didProduceSnapshot(payload)
+    }
+
+    func sendScanUpdate(_ payload: Data) {
+        client()?.didUpdateScan(payload)
+    }
+
+    private func client() -> MonitoringClientProtocol? {
         let proxy = connection.remoteObjectProxyWithErrorHandler { error in
-            Log.xpc.error("Snapshot push failed: \(error.localizedDescription, privacy: .public)")
+            Log.xpc.error("Push to client failed: \(error.localizedDescription, privacy: .public)")
         }
-        (proxy as? MonitoringClientProtocol)?.didProduceSnapshot(payload)
+        return proxy as? MonitoringClientProtocol
     }
 }
 
@@ -80,6 +88,12 @@ actor MetricsCollector {
         pushTask = Task { [weak self] in
             await self?.runPushLoop()
         }
+    }
+
+    /// Exposed for the workspace scan, which wants the toolchain's live cost
+    /// alongside its disk cost and should not own a second process sampler.
+    func toolchainFootprint() -> ToolchainFootprint {
+        processSampler.toolchainFootprint()
     }
 
     func stop() {

@@ -19,7 +19,7 @@
 import OSLog
 import Foundation
 
-actor XPCMetricsProvider: MetricsProviding, CrashSimulating {
+actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning {
     nonisolated let source = MetricsSource.xpcService
 
     private var connection: NSXPCConnection?
@@ -31,6 +31,8 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating {
     /// Counts snapshots that arrived unsolicited. A non-zero value is the only
     /// direct evidence the reverse half of the connection is live.
     private(set) var pushesReceived = 0
+
+    private var scanContinuation: AsyncStream<ScanUpdate>.Continuation?
 
     /// Set from the interruption handler when the service dies. The next
     /// `snapshot()` reports it once and rebuilds the connection, which is what
@@ -124,6 +126,48 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating {
         }
     }
 
+    // MARK: - WorkspaceScanning
+
+    func scanUpdates() -> AsyncStream<ScanUpdate> {
+        AsyncStream { continuation in
+            self.scanContinuation = continuation
+        }
+    }
+
+    func startScan(path: String) async throws {
+        let connection = activeConnection()
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let box = OneShot(continuation)
+            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
+                box.resume(throwing: MetricsProviderError.unavailable(error.localizedDescription))
+            } as? MonitoringServiceProtocol
+
+            guard let proxy else {
+                return box.resume(throwing: MetricsProviderError.unavailable("Service refused the connection"))
+            }
+            proxy.startWorkspaceScan(path: path) { _ in
+                box.resume(returning: ())
+            }
+        }
+    }
+
+    func cancelScan() async {
+        guard let connection else { return }
+        let proxy = connection.remoteObjectProxyWithErrorHandler { error in
+            Log.xpc.error("Scan cancel failed: \(error.localizedDescription, privacy: .public)")
+        }
+        (proxy as? MonitoringServiceProtocol)?.cancelWorkspaceScan()
+    }
+
+    private func receiveScan(_ payload: Data) {
+        do {
+            scanContinuation?.yield(try JSONDecoder().decode(ScanUpdate.self, from: payload))
+        } catch {
+            Log.xpc.error("Scan update rejected: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
     // MARK: - CrashSimulating
 
     func simulateCrash() async {
@@ -193,9 +237,14 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating {
         // The app is the other half of the bidirectional link: it exports an
         // object the service calls back into with each snapshot.
         connection.exportedInterface = NSXPCInterface(with: (any MonitoringClientProtocol).self)
-        connection.exportedObject = SnapshotReceiver { [weak self] payload in
-            Task { await self?.receive(payload) }
-        }
+        connection.exportedObject = SnapshotReceiver(
+            onSnapshot: { [weak self] payload in
+                Task { await self?.receive(payload) }
+            },
+            onScanUpdate: { [weak self] payload in
+                Task { await self?.receiveScan(payload) }
+            }
+        )
 
         // Interruption means the service died but the connection survives and
         // will relaunch it. Invalidation means it is gone for good.
@@ -249,14 +298,23 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating {
 /// because this target defaults to `MainActor` isolation and XPC delivers on
 /// its own queue.
 nonisolated final class SnapshotReceiver: NSObject, MonitoringClientProtocol {
-    private let handler: @Sendable (Data) -> Void
+    private let onSnapshot: @Sendable (Data) -> Void
+    private let onScanUpdate: @Sendable (Data) -> Void
 
-    init(handler: @escaping @Sendable (Data) -> Void) {
-        self.handler = handler
+    init(
+        onSnapshot: @escaping @Sendable (Data) -> Void,
+        onScanUpdate: @escaping @Sendable (Data) -> Void
+    ) {
+        self.onSnapshot = onSnapshot
+        self.onScanUpdate = onScanUpdate
     }
 
     func didProduceSnapshot(_ payload: Data) {
-        handler(payload)
+        onSnapshot(payload)
+    }
+
+    func didUpdateScan(_ payload: Data) {
+        onScanUpdate(payload)
     }
 }
 

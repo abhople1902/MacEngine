@@ -75,6 +75,66 @@ nonisolated final class ProcessSampler {
         lastSampledAt = nil
     }
 
+    /// Live cost of the Xcode toolchain, grouped by executable name.
+    ///
+    /// Grouping is the entire point: a build in flight is a dozen
+    /// swift-frontend processes, and twelve rows of 300 MB tells you far less
+    /// than one row saying 3.6 GB across twelve processes. Reads the CPU
+    /// baseline left by `sample()` without disturbing it, so the two can be
+    /// called independently.
+    func toolchainFootprint(now: Date = Date()) -> ToolchainFootprint {
+        let elapsedNanoseconds = lastSampledAt
+            .map { Swift.max(now.timeIntervalSince($0), 0) * 1_000_000_000 } ?? 0
+
+        var grouped: [String: (count: Int, bytes: UInt64, cpu: Double)] = [:]
+
+        for pid in Self.livePIDs() {
+            let executable = name(for: pid)
+            guard Self.isToolchain(executable) else { continue }
+            guard let task = Self.taskInfo(for: pid) else { continue }
+
+            var cpuFraction = 0.0
+            let cpuTime = task.pti_total_user &+ task.pti_total_system
+            if elapsedNanoseconds > 0, let baseline = previousCPUTime[pid], cpuTime > baseline {
+                cpuFraction = Double(cpuTime - baseline) / elapsedNanoseconds
+            }
+
+            var entry = grouped[executable] ?? (0, 0, 0)
+            entry.count += 1
+            entry.bytes += task.pti_resident_size
+            entry.cpu += cpuFraction
+            grouped[executable] = entry
+        }
+
+        let groups = grouped
+            .map { ToolchainGroup(name: $0.key, processCount: $0.value.count, memoryBytes: $0.value.bytes, cpuFraction: $0.value.cpu) }
+            .sorted { $0.memoryBytes > $1.memoryBytes }
+
+        return ToolchainFootprint(groups: groups)
+    }
+
+    /// Matched by executable name. Exact names for the things that are only ever
+    /// Xcode, prefixes for the families that spawn numbered or suffixed
+    /// variants (swift-frontend, lldb-rpc-server, and the Metal compilers).
+    private static let toolchainNames: Set<String> = [
+        "Xcode", "xcodebuild", "XCBBuildService", "SourceKitService",
+        "swift-frontend", "swift-driver", "swift", "swiftc",
+        "clang", "clangd", "ld", "ld-prime", "libtool", "dsymutil",
+        "lldb", "debugserver", "lldb-rpc-server",
+        "Simulator", "CoreSimulatorService", "SimulatorTrampoline", "launchd_sim",
+        "IBAgent-macOS", "IBCocoaTouchImageCatalogTool", "actool", "ibtool",
+        "MTLCompilerService", "Instruments", "InstrumentsDeviceService",
+    ]
+
+    private static let toolchainPrefixes = [
+        "swift-", "com.apple.CoreSimulator", "XCTest", "MTLCompiler", "AssetCatalog",
+    ]
+
+    private static func isToolchain(_ executable: String) -> Bool {
+        if toolchainNames.contains(executable) { return true }
+        return toolchainPrefixes.contains { executable.hasPrefix($0) }
+    }
+
     private func name(for pid: Int32) -> String {
         if let cached = nameCache[pid] { return cached }
         let resolved = Self.executableName(for: pid)

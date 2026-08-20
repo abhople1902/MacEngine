@@ -37,12 +37,23 @@ nonisolated enum MonitoringIdentifiers {
     /// Debug-only: terminates the service so the app's recovery path can be
     /// exercised from the Diagnostics screen.
     func simulateCrash()
+
+    /// Begins measuring a workspace's true cost on disk. Returns as soon as the
+    /// job is accepted — a full walk takes tens of seconds and holding an XPC
+    /// reply block open for that long invites a timeout and gives the user no
+    /// feedback. Progress and the result arrive over `MonitoringClientProtocol`.
+    func startWorkspaceScan(path: String, withReply reply: @escaping (Bool) -> Void)
+
+    func cancelWorkspaceScan()
 }
 
 /// Callbacks the service invokes on the app. Streaming metrics travel this way;
 /// lifecycle events travel over `DistributedNotificationCenter` instead.
 @objc nonisolated protocol MonitoringClientProtocol {
     func didProduceSnapshot(_ payload: Data)
+
+    /// One JSON-encoded `ScanUpdate`: started, progress, finished or failed.
+    func didUpdateScan(_ payload: Data)
 }
 
 /// Health and lifetime of the monitoring process itself.

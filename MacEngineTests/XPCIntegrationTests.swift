@@ -84,6 +84,46 @@ final class XPCIntegrationTests: XCTestCase {
         XCTAssertTrue(processes.allSatisfy { $0.pid > 0 && !$0.name.isEmpty })
     }
 
+    /// Exercises the whole scan path — request out, updates back over the
+    /// reverse channel — without measuring ten gigabytes in a unit test run.
+    /// The scan is cancelled as soon as it reports that it started.
+    func testWorkspaceScanReportsProgressAndHonoursCancellation() async throws {
+        let provider = XPCMetricsProvider()
+        await provider.start(interval: interval)
+        defer { Task { await provider.stop() } }
+
+        let project = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appending(path: "MacEngine.xcodeproj", directoryHint: .isDirectory)
+        try XCTSkipUnless(
+            FileManager.default.fileExists(atPath: project.path),
+            "Source tree not present in this run"
+        )
+
+        let updates = await provider.scanUpdates()
+        let started = expectation(description: "scan started")
+        let cancelled = expectation(description: "scan cancelled")
+
+        let consumer = Task {
+            for await update in updates {
+                switch update {
+                case .started: started.fulfill()
+                case .cancelled: cancelled.fulfill()
+                case .failed(let reason): XCTFail("Scan failed: \(reason)")
+                default: break
+                }
+            }
+        }
+        defer { consumer.cancel() }
+
+        try await provider.startScan(path: project.path)
+        await fulfillment(of: [started], timeout: 15)
+
+        await provider.cancelScan()
+        await fulfillment(of: [cancelled], timeout: 15)
+    }
+
     func testServiceRecoversAfterACrash() async throws {
         let provider = XPCMetricsProvider()
         await provider.start(interval: interval)

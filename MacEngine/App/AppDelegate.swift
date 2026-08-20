@@ -16,9 +16,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // The app no longer samples anything itself: readings come from the
     // monitoring service over XPC. `LocalMetricsProvider` remains as the
     // in-process comparison and is what the unit tests drive.
-    let dashboard = DashboardViewModel(provider: XPCMetricsProvider())
+    //
+    // One provider, shared. Two would mean two connections to the same service
+    // and two sampling loops inside it, for no benefit.
+    let dashboard: DashboardViewModel
+    let inspector: WorkspaceInspectorViewModel
 
     private var statusItemController: StatusItemController?
+
+    override init() {
+        let provider = XPCMetricsProvider()
+        dashboard = DashboardViewModel(provider: provider)
+        inspector = WorkspaceInspectorViewModel(scanner: provider)
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.app.info("MacEngine launched, pid \(ProcessInfo.processInfo.processIdentifier)")

@@ -54,3 +54,14 @@ nonisolated protocol CrashSimulating {
     /// Terminates the backing process so the recovery path can be observed.
     func simulateCrash() async
 }
+
+/// Implemented by providers that can measure a workspace's cost on disk. Kept
+/// separate from `MetricsProviding` because a scan is a different shape of work
+/// — one long job with progress, not a repeating reading.
+nonisolated protocol WorkspaceScanning {
+    /// Progress and results for scans. One consumer; the stream lives as long
+    /// as the provider does.
+    func scanUpdates() async -> AsyncStream<ScanUpdate>
+    func startScan(path: String) async throws
+    func cancelScan() async
+}

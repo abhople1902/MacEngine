@@ -2,21 +2,26 @@
 //  ContentView.swift
 //  MacEngine
 //
-//  Created by Ayush Bhople on 20/08/26.
+//  Two views onto the same monitoring service: the live dashboard, and the
+//  workspace inspector that asks it a much heavier one-off question.
 //
 
 import SwiftUI
 
 struct ContentView: View {
     @Bindable var model: DashboardViewModel
+    @Bindable var inspector: WorkspaceInspectorViewModel
 
     var body: some View {
-        DashboardView(model: model)
-            .frame(minWidth: 640, minHeight: 560)
-            .onAppear { model.start() }
+        TabView {
+            Tab("Dashboard", systemImage: "gauge.with.dots.needle.33percent") {
+                DashboardView(model: model)
+            }
+            Tab("Workspace", systemImage: "internaldrive") {
+                WorkspaceInspectorView(model: inspector)
+            }
+        }
+        .frame(minWidth: 680, minHeight: 600)
+        .onAppear { model.start() }
     }
-}
-
-#Preview {
-    ContentView(model: DashboardViewModel())
 }

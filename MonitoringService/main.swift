@@ -13,6 +13,7 @@ final class ServiceDelegate: NSObject, NSXPCListenerDelegate {
     /// Shared across connections so sampling state and counters belong to the
     /// process, not to whoever happened to connect.
     private let collector = MetricsCollector()
+    private lazy var scanner = WorkspaceScanner(collector: collector)
 
     func listener(
         _ listener: NSXPCListener,
@@ -20,15 +21,19 @@ final class ServiceDelegate: NSObject, NSXPCListenerDelegate {
     ) -> Bool {
         // What this process vends.
         newConnection.exportedInterface = NSXPCInterface(with: (any MonitoringServiceProtocol).self)
-        newConnection.exportedObject = MonitoringService(collector: collector)
+        let channel = ClientChannel(connection: newConnection)
+        newConnection.exportedObject = MonitoringService(
+            collector: collector,
+            scanner: scanner,
+            channel: channel
+        )
 
         // What the app vends back to us. Setting this is what makes the
         // connection bidirectional: without it the service could only ever
         // answer requests, never push a snapshot.
         newConnection.remoteObjectInterface = NSXPCInterface(with: (any MonitoringClientProtocol).self)
 
-        let channel = ClientChannel(connection: newConnection)
-        Task { await collector.attach(channel) }
+        Task { [collector] in await collector.attach(channel) }
 
         newConnection.invalidationHandler = {
             Log.xpc.info("Client connection invalidated")

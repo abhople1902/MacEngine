@@ -16,9 +16,13 @@ import Foundation
 
 final class MonitoringService: NSObject, MonitoringServiceProtocol {
     private let collector: MetricsCollector
+    private let scanner: WorkspaceScanner
+    private let channel: ClientChannel
 
-    init(collector: MetricsCollector) {
+    init(collector: MetricsCollector, scanner: WorkspaceScanner, channel: ClientChannel) {
         self.collector = collector
+        self.scanner = scanner
+        self.channel = channel
     }
 
     func currentSnapshot(withReply reply: @escaping (Data?, String?) -> Void) {
@@ -53,6 +57,19 @@ final class MonitoringService: NSObject, MonitoringServiceProtocol {
             } catch {
                 reply(nil, error.localizedDescription)
             }
+        }
+    }
+
+    func startWorkspaceScan(path: String, withReply reply: @escaping (Bool) -> Void) {
+        Task { [scanner, channel] in
+            await scanner.start(path: path, channel: channel)
+            reply(true)
+        }
+    }
+
+    func cancelWorkspaceScan() {
+        Task { [scanner] in
+            await scanner.cancel()
         }
     }
 
