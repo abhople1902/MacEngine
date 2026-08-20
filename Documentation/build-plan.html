@@ -1,0 +1,834 @@
+<title>MacEngine Build Plan</title>
+<style>
+  :root {
+    --ground: #F7F8FA;
+    --surface: #FFFFFF;
+    --sunk: #ECEFF4;
+    --ink: #171C24;
+    --ink-2: #49535F;
+    --ink-3: #737F8F;
+    --rule: #DCE1E8;
+    --rule-strong: #BFC8D4;
+    --accent: #8A5C10;
+    --accent-soft: #F2E7D0;
+    --ship: #0E6F62;
+    --ship-soft: #DCEFEA;
+    --stretch: #2F6296;
+    --stretch-soft: #DFEAF5;
+    --cut: #8E3340;
+    --cut-soft: #F6E1E3;
+    --shadow: 0 1px 2px rgba(23,28,36,.05), 0 8px 24px -16px rgba(23,28,36,.25);
+
+    --font-display: "Iowan Old Style", Charter, "Palatino Linotype", Palatino, Georgia, serif;
+    --font-body: "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+    --frame: 1080px;
+    --prose: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12151A;
+      --surface: #191D24;
+      --sunk: #0D1015;
+      --ink: #E6EAF0;
+      --ink-2: #AEB8C6;
+      --ink-3: #7B8798;
+      --rule: #272D36;
+      --rule-strong: #3A434F;
+      --accent: #D6A44B;
+      --accent-soft: #35291442;
+      --ship: #4FBBA4;
+      --ship-soft: #10302B;
+      --stretch: #78A9E0;
+      --stretch-soft: #142738;
+      --cut: #D9757F;
+      --cut-soft: #331A1E;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #12151A;
+    --surface: #191D24;
+    --sunk: #0D1015;
+    --ink: #E6EAF0;
+    --ink-2: #AEB8C6;
+    --ink-3: #7B8798;
+    --rule: #272D36;
+    --rule-strong: #3A434F;
+    --accent: #D6A44B;
+    --accent-soft: #35291442;
+    --ship: #4FBBA4;
+    --ship-soft: #10302B;
+    --stretch: #78A9E0;
+    --stretch-soft: #142738;
+    --cut: #D9757F;
+    --cut-soft: #331A1E;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--frame);
+    margin-inline: auto;
+    padding: 0 28px 96px;
+  }
+  .prose { max-width: var(--prose); }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    text-wrap: balance;
+    line-height: 1.2;
+  }
+
+  /* ---------- masthead ---------- */
+  header.masthead {
+    padding: 64px 0 34px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 { font-size: clamp(38px, 6vw, 60px); letter-spacing: -.015em; }
+  h1 .sub { display: block; font-size: .42em; color: var(--ink-3); font-weight: 400; letter-spacing: 0; margin-top: 10px; font-family: var(--font-body); }
+  .standfirst { font-size: 18px; color: var(--ink-2); max-width: var(--prose); }
+
+  .budget {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--surface);
+    overflow: hidden;
+    margin-top: 6px;
+  }
+  .budget div {
+    flex: 1 1 150px;
+    padding: 13px 18px;
+    border-right: 1px solid var(--rule);
+  }
+  .budget div:last-child { border-right: 0; }
+  .budget dt {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .budget dd {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    margin-top: 3px;
+  }
+  .budget dd small { font-size: 12px; color: var(--ink-3); }
+
+  /* ---------- sections ---------- */
+  section { padding-top: 60px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 10px;
+    margin-bottom: 26px;
+  }
+  .sec-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: .08em;
+  }
+  h2 { font-size: 27px; letter-spacing: -.01em; }
+  h3 { font-size: 19px; margin-bottom: 8px; }
+  p { margin-bottom: 14px; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--accent); }
+
+  code, .m { font-family: var(--font-mono); font-size: .86em; }
+  code {
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  ul.tight { list-style: none; display: flex; flex-direction: column; gap: 9px; max-width: var(--prose); }
+  ul.tight li { padding-left: 20px; position: relative; }
+  ul.tight li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: .62em;
+    width: 7px; height: 1px;
+    background: var(--rule-strong);
+  }
+
+  .note {
+    border-left: 2px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px;
+    border-radius: 0 3px 3px 0;
+    max-width: var(--prose);
+    font-size: 15px;
+    color: var(--ink-2);
+    margin: 20px 0;
+  }
+  .note strong { color: var(--ink); }
+
+  /* ---------- pitch ---------- */
+  .pitch {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .pitch article { background: var(--surface); padding: 18px 20px; }
+  .pitch h4 {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 8px;
+  }
+  .pitch p { font-size: 14.5px; color: var(--ink-2); margin: 0; }
+  .pitch em { color: var(--ink); font-style: normal; font-weight: 600; }
+
+  /* ---------- diagram ---------- */
+  .diagram-wrap {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+  }
+  svg.topo { display: block; min-width: 880px; width: 100%; height: auto; }
+  svg.topo .box { fill: var(--surface); stroke: var(--rule-strong); stroke-width: 1.2; }
+  svg.topo .box-em { fill: var(--sunk); stroke: var(--ink-3); stroke-width: 1.4; }
+  svg.topo .chip { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; }
+  svg.topo .t { font-family: var(--font-body); font-size: 14px; font-weight: 600; fill: var(--ink); }
+  svg.topo .s { font-family: var(--font-mono); font-size: 10.5px; fill: var(--ink-3); }
+  svg.topo .c { font-family: var(--font-mono); font-size: 10px; fill: var(--accent); }
+  svg.topo .lbl { font-family: var(--font-mono); font-size: 10px; fill: var(--ink-3); }
+  svg.topo .wire { stroke: var(--rule-strong); stroke-width: 1.4; fill: none; }
+  svg.topo .wire-dash { stroke: var(--rule-strong); stroke-width: 1.4; fill: none; stroke-dasharray: 4 4; }
+
+  /* ---------- scope ---------- */
+  .scope { display: flex; flex-direction: column; gap: 12px; }
+  .item {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--rule-strong);
+    border-radius: 0 3px 3px 0;
+    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 18px;
+    align-items: start;
+  }
+  .item.ship { border-left-color: var(--ship); }
+  .item.stretch { border-left-color: var(--stretch); }
+  .item.cut { border-left-color: var(--cut); opacity: .8; }
+  .item h4 { font-size: 16px; font-family: var(--font-display); font-weight: 600; }
+  .item p { font-size: 14.5px; color: var(--ink-2); margin: 0; grid-column: 1 / -1; max-width: 78ch; }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+  .tag.ship { background: var(--ship-soft); color: var(--ship); }
+  .tag.stretch { background: var(--stretch-soft); color: var(--stretch); }
+  .tag.cut { background: var(--cut-soft); color: var(--cut); }
+
+  /* ---------- schedule ---------- */
+  .day-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    border-top: 1px solid var(--ink-3);
+    padding-top: 8px;
+    margin: 30px 0 16px;
+  }
+  .day-label b { color: var(--ink); }
+  .blocks { display: flex; flex-direction: column; }
+  .block {
+    display: grid;
+    grid-template-columns: 96px 1fr;
+    gap: 0 24px;
+    border-left: 1px solid var(--rule);
+    padding: 0 0 26px 0;
+    position: relative;
+  }
+  .block::before {
+    content: "";
+    position: absolute;
+    left: -4.5px; top: 5px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .block:last-child { border-left-color: transparent; }
+  .block .clock {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: .06em;
+    padding-left: 20px;
+    padding-top: 1px;
+  }
+  .block .clock span { display: block; color: var(--ink-3); margin-top: 2px; }
+  .block .body h3 { font-size: 17px; margin-bottom: 6px; }
+  .block .body ul { list-style: none; display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .block .body li { font-size: 14.5px; color: var(--ink-2); padding-left: 15px; position: relative; }
+  .block .body li::before { content: "·"; position: absolute; left: 3px; color: var(--rule-strong); }
+  .gate {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink);
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 8px 12px;
+    display: inline-block;
+    max-width: 74ch;
+  }
+  .gate b { color: var(--accent); letter-spacing: .08em; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 2px; }
+
+  /* ---------- tables ---------- */
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 600px; }
+  th, td { text-align: left; padding: 10px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 14.5px; }
+  th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    background: var(--sunk);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.mono, td .mono { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+  td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  td strong { color: var(--ink); }
+
+  .bar-cell { display: flex; align-items: center; gap: 10px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
+  .bar.dim { background: var(--rule-strong); }
+
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; align-items: start; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 18px 20px;
+  }
+  .card h3 { margin-bottom: 10px; }
+  .card ul.tight li { font-size: 14.5px; color: var(--ink-2); }
+
+  .yes-no { display: flex; flex-direction: column; gap: 8px; }
+  .yes-no div { font-size: 14.5px; padding-left: 24px; position: relative; color: var(--ink-2); }
+  .yes-no div::before {
+    position: absolute; left: 0; top: 0;
+    font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+  }
+  .yes-no .y::before { content: "+"; color: var(--ship); }
+  .yes-no .n::before { content: "\2013"; color: var(--cut); }
+
+  footer {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: .06em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .block { grid-template-columns: 1fr; gap: 8px; }
+    .block .clock { padding-left: 20px; }
+    .block .body { padding-left: 20px; }
+    .item { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Revised build plan &middot; 19 Aug 2026</div>
+  <h1>MacEngine
+    <span class="sub">A multi-process macOS monitor, scoped down from three days to fourteen working hours</span>
+  </h1>
+  <p class="standfirst">The original plan was written for three full days. You have today and part of tomorrow. This version keeps the architecture that makes the project worth showing an interviewer, adds your two ideas, and names exactly what gets dropped so nothing is decided at 2am.</p>
+  <dl class="budget">
+    <div><dt>Time budget</dt><dd>14 h <small>10 today / 4 tomorrow</small></dd></div>
+    <div><dt>Build blocks</dt><dd>7 <small>each with a gate</small></dd></div>
+    <div><dt>Processes</dt><dd>3 <small>app / xpc / cli</small></dd></div>
+    <div><dt>IPC mechanisms</dt><dd>3 <small>xpc, dnc, socket</small></dd></div>
+    <div><dt>Toolchain</dt><dd>26.6 <small>xcode, swift 6.3</small></dd></div>
+  </dl>
+</header>
+
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>What changed, and what didn't</h2></div>
+  <div class="prose">
+    <p>The three-day plan spent its last day on tests, Instruments and polish. That day no longer exists, so those move into a four-hour block and get sharply narrower: four unit tests instead of twelve, two integration tests instead of a suite, one profiled optimisation with real numbers instead of three.</p>
+    <p>What does not move is the spine: <strong>UI process and monitoring process are genuinely separate, and the app survives the monitor dying.</strong> Everything else in this plan is negotiable. That is not.</p>
+    <p>Two things get <em>added</em> rather than cut, because they cost less than they look and they are what makes this stop being another Activity Monitor clone: <strong>Engineer Mode</strong> and the <strong>Xcode Workspace Inspector</strong>.</p>
+  </div>
+  <div class="note">
+    <strong>On the UI.</strong> You asked for sufficient, not showy — that is the right call and it is also what the role rewards. Budget the UI at roughly two of the fourteen hours. A clean SwiftUI dashboard with honest numbers beats an animated one, and Engineer Mode gives you visual interest that is <em>earned by the architecture</em> rather than applied on top of it.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>The six sentences you say in the interview</h2></div>
+  <p class="prose" style="margin-bottom:22px;">Build the project backwards from these. If a feature does not serve one of them, it is a cut candidate.</p>
+  <div class="pitch">
+    <article><h4>Multi-process / XPC</h4><p>"The UI never touches the kernel APIs. It holds an <em>NSXPCConnection</em> to an isolated service that does all sampling, and the service pushes snapshots back over a reverse proxy — so it's bidirectional, not request/response."</p></article>
+    <article><h4>Reliability</h4><p>"I kill the service from a button in the app. The connection invalidates, the UI shows degraded state, launchd relaunches the service on the next message, and metrics resume — <em>typically inside two seconds</em>."</p></article>
+    <article><h4>Distributed notifications</h4><p>"Lifecycle events go over <em>DistributedNotificationCenter</em>, not XPC. Streaming metrics and rare state changes have different delivery requirements, so they get different transports."</p></article>
+    <article><h4>Sockets</h4><p>"The service also listens on a <em>Unix domain socket</em>, so a CLI can query it without launching the GUI. Same data, second front door."</p></article>
+    <article><h4>Systems knowledge</h4><p>"Engineer Mode shows the real VM composition — wired, active, compressed, swapped — and the <em>actual</em> heap and stack region maps of my own two processes, read through mach_vm_region."</p></article>
+    <article><h4>Instruments</h4><p>"The directory walk was the hot path. Time Profiler showed it serialised on one queue; I moved to a bounded concurrent walk and cut a 3.4 GB scan from <em>X</em> to <em>Y</em> seconds. Numbers are in the README."</p></article>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>Architecture</h2></div>
+  <p class="prose" style="margin-bottom:22px;">Three processes, three IPC mechanisms, no root and no kernel extension. Every arrow below is something you can point at during the walkthrough.</p>
+  <div class="diagram-wrap">
+    <svg class="topo" viewBox="0 0 960 500" role="img" aria-label="MacEngine process topology: the app talks to an XPC metrics service over a bidirectional NSXPCConnection, receives lifecycle events via DistributedNotificationCenter, and a CLI reaches the same service over a Unix domain socket.">
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rule-strong)" />
+        </marker>
+      </defs>
+
+      <rect class="box-em" x="270" y="18" width="420" height="90" rx="4" />
+      <text class="t" x="288" y="42">MacEngine.app</text>
+      <text class="s" x="288" y="59">SwiftUI dashboard + AppKit NSStatusItem</text>
+      <rect class="chip" x="288" y="70" width="98" height="22" rx="3" />
+      <text class="c" x="299" y="85">Normal mode</text>
+      <rect class="chip" x="394" y="70" width="106" height="22" rx="3" />
+      <text class="c" x="405" y="85">Engineer mode</text>
+      <rect class="chip" x="508" y="70" width="118" height="22" rx="3" />
+      <text class="c" x="519" y="85">Xcode Inspector</text>
+
+      <path class="wire" d="M 400 108 L 400 194" marker-end="url(#ah)" />
+      <path class="wire" d="M 560 194 L 560 108" marker-end="url(#ah)" />
+      <text class="lbl" x="300" y="140">commands</text>
+      <text class="lbl" x="292" y="153">start / stop / crash</text>
+      <text class="lbl" x="575" y="140">snapshots</text>
+      <text class="lbl" x="575" y="153">pushed @ 1 Hz</text>
+      <text class="lbl" x="415" y="176" style="fill:var(--accent)">NSXPCConnection &middot; bidirectional</text>
+
+      <rect class="box-em" x="230" y="194" width="500" height="152" rx="4" />
+      <text class="t" x="248" y="218">MetricsService.xpc</text>
+      <text class="s" x="248" y="235">launchd-managed &middot; on-demand &middot; relaunched after crash</text>
+      <rect class="box" x="246" y="250" width="112" height="76" rx="3" />
+      <text class="s" x="258" y="272" style="fill:var(--ink);font-size:11px">SystemSampler</text>
+      <text class="s" x="258" y="288">cpu / vm</text>
+      <text class="s" x="258" y="302">swap / pressure</text>
+      <rect class="box" x="366" y="250" width="112" height="76" rx="3" />
+      <text class="s" x="378" y="272" style="fill:var(--ink);font-size:11px">ProcessSampler</text>
+      <text class="s" x="378" y="288">libproc</text>
+      <text class="s" x="378" y="302">top-K heap</text>
+      <rect class="box" x="486" y="250" width="112" height="76" rx="3" />
+      <text class="s" x="498" y="272" style="fill:var(--ink);font-size:11px">DiskWalker</text>
+      <text class="s" x="498" y="288">concurrent</text>
+      <text class="s" x="498" y="302">size roll-up</text>
+      <rect class="box" x="606" y="250" width="108" height="76" rx="3" />
+      <text class="s" x="618" y="272" style="fill:var(--ink);font-size:11px">SocketServer</text>
+      <text class="s" x="618" y="288">AF_UNIX</text>
+      <text class="s" x="618" y="302">line protocol</text>
+
+      <rect class="box" x="20" y="196" width="176" height="72" rx="4" />
+      <text class="t" x="34" y="222" style="font-size:12.5px">DistributedNotification</text>
+      <text class="t" x="34" y="238" style="font-size:12.5px">Center</text>
+      <text class="s" x="34" y="255">lifecycle events only</text>
+      <path class="wire-dash" d="M 230 232 L 200 232" marker-end="url(#ah)" />
+      <path class="wire-dash" d="M 108 196 L 108 63 L 266 63" marker-end="url(#ah)" />
+      <text class="lbl" x="118" y="120">ServiceUp</text>
+      <text class="lbl" x="118" y="134">ServiceLost</text>
+      <text class="lbl" x="118" y="148">HighCPU</text>
+      <text class="lbl" x="118" y="162">ScanFinished</text>
+
+      <rect class="box" x="764" y="252" width="176" height="72" rx="4" />
+      <text class="t" x="778" y="278">macengine-cli</text>
+      <text class="s" x="778" y="295">status &middot; snapshot</text>
+      <text class="s" x="778" y="309">runs without the GUI</text>
+      <path class="wire" d="M 760 288 L 718 288" marker-end="url(#ah)" />
+      <text class="lbl" x="726" y="342">/tmp/macengine.sock</text>
+
+      <path class="wire" d="M 480 346 L 480 396" marker-end="url(#ah)" />
+      <rect class="box" x="230" y="396" width="500" height="72" rx="4" />
+      <text class="t" x="248" y="422">Darwin kernel interfaces</text>
+      <text class="s" x="248" y="440">host_statistics64 &middot; vm_statistics64 &middot; libproc &middot; statfs &middot; sysctl &middot; mach_vm_region</text>
+      <text class="s" x="248" y="456" style="fill:var(--accent)">no task_for_pid &mdash; runs entirely unprivileged</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>Scope, in three tiers</h2></div>
+  <p class="prose" style="margin-bottom:22px;">Ship items are the project. Stretch items happen only if you are ahead at a gate. Cut items are decided now, in daylight, so they do not reappear as a temptation at hour eleven.</p>
+  <div class="scope">
+
+    <div class="item ship"><h4>XPC service with bidirectional connection</h4><span class="tag ship">Ship</span>
+      <p>Embedded <code>.xpc</code> target in the app bundle. App exports a listener endpoint so the service can push snapshots; app calls in for commands. This single choice gives you multi-process, XPC, <em>and</em> a background service managed by launchd without writing a plist.</p></div>
+
+    <div class="item ship"><h4>Connection state machine + kill/recover demo</h4><span class="tag ship">Ship</span>
+      <p>States: <code>disconnected → connecting → live → degraded → recovering</code>. Driven by <code>invalidationHandler</code> and <code>interruptionHandler</code>. A developer button calls <code>crash()</code> on the service, which calls <code>exit(1)</code>. This is your demo. Record the GIF of it.</p></div>
+
+    <div class="item ship"><h4>Normal-mode dashboard</h4><span class="tag ship">Ship</span>
+      <p>Three tiles (CPU, memory, disk), one CPU history chart off a fixed-size ring buffer, one top-processes table. Swift Charts, no custom drawing. Plus one AppKit <code>NSStatusItem</code> in the menu bar showing live CPU — cheap, and it makes "Cocoa/AppKit" true rather than aspirational.</p></div>
+
+    <div class="item ship"><h4>Engineer Mode</h4><span class="tag ship">Ship</span>
+      <p>A toggle that reveals the mechanism instead of the summary: live process topology with real PIDs and connection state, full VM composition bar, and real heap/stack/mapped-file region maps for MacEngine's own two processes. Detail below in section 05.</p></div>
+
+    <div class="item ship"><h4>Xcode Workspace Inspector</h4><span class="tag ship">Ship</span>
+      <p>Pick a <code>.xcodeproj</code>/<code>.xcworkspace</code>, get its true on-disk cost and the live memory footprint of the toolchain processes serving it. Detail below in section 06.</p></div>
+
+    <div class="item ship"><h4>Distributed notifications for lifecycle</h4><span class="tag ship">Ship</span>
+      <p>Five event names, posted by the service, consumed by the app, rendered as a live event log in Engineer Mode. About forty minutes of work and it ticks a named preferred skill.</p></div>
+
+    <div class="item ship"><h4>Tests: 4 unit, 2 integration</h4><span class="tag ship">Ship</span>
+      <p>Unit: CPU tick-delta normalisation, VM page-count composition, top-K selection, directory size roll-up. Integration: one XPC round-trip, one crash-and-recover. That is enough to talk about testing honestly.</p></div>
+
+    <div class="item ship"><h4>One profiled optimisation with numbers</h4><span class="tag ship">Ship</span>
+      <p>Time Profiler on the directory walk, fix the bottleneck, record before/after. Leaks clean. Screenshot both into <code>Documentation/instruments.md</code>. Do not skip this — it is explicitly named in the posting and it is the cheapest credibility in the whole plan.</p></div>
+
+    <div class="item stretch"><h4>Unix domain socket + macengine-cli</h4><span class="tag stretch">Stretch</span>
+      <p>Highest-value stretch item. Listener inside the service, a ~120-line CLI target. If tomorrow starts on schedule, build it. If not, the socket is the first thing you sacrifice — you still have two IPC mechanisms.</p></div>
+
+    <div class="item stretch"><h4>Tiny Objective-C bridge</h4><span class="tag stretch">Stretch</span>
+      <p>Twenty minutes: wrap the <code>proc_listpids</code> two-call dance in one small ObjC class with a bridging header. Makes "Swift <em>and</em> Objective-C" literally true and gives you a mixed-language build to discuss.</p></div>
+
+    <div class="item cut"><h4>LaunchAgent / SMAppService / launchd plists</h4><span class="tag cut">Cut</span>
+      <p>The embedded XPC service already <em>is</em> a launchd-managed background process. Writing a real agent means plists, install logic, signing and Login Items — hours of yak-shaving for a story you already have. Put it in README "future work".</p></div>
+
+    <div class="item cut"><h4>App Sandbox, hardened runtime, notarisation</h4><span class="tag cut">Cut</span>
+      <p>Sandbox blocks distributed-notification userInfo, complicates socket paths, and fights the DerivedData reads. Turn it off, sign to run locally, and say so in the README as a deliberate scoping decision for a local dev tool.</p></div>
+
+    <div class="item cut"><h4>Mach ports, persistence, settings, animation</h4><span class="tag cut">Cut</span>
+      <p>Mach ports add nothing you cannot already claim via XPC (which is built on them — that is your answer if asked). No Core Data, no preferences window, no onboarding, no transitions.</p></div>
+
+    <div class="item cut"><h4>Anything about the app being built</h4><span class="tag cut">Cut</span>
+      <p>Per your own scoping call, and it is the right one: MacEngine measures the <em>project and the toolchain</em>, never the built product's runtime. Instruments owns that and owns it better. Saying this out loud in the README reads as judgement, not as a gap.</p></div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>Engineer Mode</h2></div>
+  <div class="two-col">
+    <div>
+      <p class="prose">Your instinct is right, with one adjustment. Drawing generic stack/heap textbook diagrams would be decoration, and an interviewer will spot it in one question. Instead, Engineer Mode shows <strong>this application's real mechanism</strong> — which happens to be a genuine OS-concepts tour, because the thing being explained really is IPC and virtual memory.</p>
+      <p class="prose">The adjustment is where the region maps come from. You can read full VM region maps for <em>your own</em> tasks without any privileges. Reading another process's regions needs <code>task_for_pid</code>, which means root or a debugger entitlement. So: deep region view for MacEngine's own app and service processes, footprint-level numbers for everyone else. That boundary is itself a good thing to be able to explain.</p>
+      <h3 style="margin-top:24px;">Four panels</h3>
+      <ul class="tight">
+        <li><strong>Process topology</strong> — the section 03 diagram, live: real PIDs, real connection state, message counts, and the last event. Watch it re-draw when you kill the service.</li>
+        <li><strong>Virtual memory composition</strong> — a stacked bar of wired / active / inactive / speculative / compressed / free from <code>vm_statistics64</code>, plus swap in-use from <code>vm.swapusage</code> and the pressure level from <code>kern.memorystatus_vm_pressure_level</code>. Labelled with what each state actually means.</li>
+        <li><strong>Address space map</strong> — for the app and the service: heap, stack, <code>__TEXT</code>, mapped files, and shared regions, walked via <code>mach_vm_region_recurse</code>. This is your honest stack/heap diagram, drawn from live data.</li>
+        <li><strong>Sampling pipeline</strong> — collect → encode → XPC transit → decode → render, with measured microseconds per stage. It is where your Instruments story becomes visible in the product.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Implementation shortcut</h3>
+      <p style="font-size:14.5px;color:var(--ink-2)">Do not build two view hierarchies. Engineer Mode is one <code>@AppStorage</code> boolean; each dashboard section reads it and renders either the summary or the mechanism. Shared view models, one extra panel column. Budget 90 minutes, not a day.</p>
+      <h3 style="margin-top:20px;">What it buys you</h3>
+      <div class="yes-no">
+        <div class="y">Visual interest without visual effort</div>
+        <div class="y">A reason the architecture is visible to a non-reader of your code</div>
+        <div class="y">Direct OS-concept vocabulary in the demo: paging, compression, address spaces, IPC lifetime</div>
+        <div class="n">Do not promise per-process heap maps for arbitrary PIDs</div>
+        <div class="n">Do not draw a CPU pipeline or cache hierarchy you cannot measure</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>Xcode Workspace Inspector</h2></div>
+  <p class="prose" style="margin-bottom:20px;">This is the feature that makes the project yours rather than a tutorial. It answers a question every macOS/iOS developer has actually asked — <em>where did my disk go, and what is Xcode doing to my machine right now</em> — and it does it without pretending to be Instruments.</p>
+
+  <h3 style="margin-bottom:10px;">The disk half — measured on your machine, just now</h3>
+  <p class="prose">These are real numbers from this Mac. They are also why the feature lands: 12 GB of developer state, and most of it is invisible in Finder.</p>
+  <div class="tbl-wrap" style="margin:16px 0 8px;">
+    <table>
+      <thead><tr><th>Location</th><th>What it is</th><th style="text-align:right">Size now</th><th>Weight</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">CoreSimulator/Devices</td><td>Simulator runtimes and per-device data</td><td class="num">6.0 GB</td><td><div class="bar-cell"><div class="bar" style="width:100px"></div></div></td></tr>
+        <tr><td class="mono">DerivedData/&lt;Project&gt;-&lt;hash&gt;</td><td>Build products, index store, logs, per project</td><td class="num">1.8 GB</td><td><div class="bar-cell"><div class="bar" style="width:30px"></div></div></td></tr>
+        <tr><td class="mono">DerivedData/ModuleCache.noindex</td><td>Precompiled module cache, shared</td><td class="num">1.4 GB</td><td><div class="bar-cell"><div class="bar" style="width:23px"></div></div></td></tr>
+        <tr><td class="mono">Caches/org.swift.swiftpm</td><td>Resolved SwiftPM package checkouts</td><td class="num">484 MB</td><td><div class="bar-cell"><div class="bar dim" style="width:8px"></div></div></td></tr>
+        <tr><td class="mono">DerivedData/SymbolCache.noindex</td><td>Shared symbol cache</td><td class="num">44 MB</td><td><div class="bar-cell"><div class="bar dim" style="width:2px"></div></div></td></tr>
+        <tr><td class="mono">~/Library/Developer</td><td><strong>Total developer footprint</strong></td><td class="num"><strong>12 GB</strong></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose" style="font-size:14.5px;color:var(--ink-3)">Archives and iOS DeviceSupport are empty here — still enumerate them, they are the two that explode on other people's machines.</p>
+
+  <div class="note">
+    <strong>The one trick you need.</strong> A DerivedData folder is named <code>&lt;ProjectName&gt;-&lt;28-char hash&gt;</code> and the hash is not reproducible from the path. Do not try to compute it. Every DerivedData subfolder contains an <code>info.plist</code> with a <code>WorkspacePath</code> key — read those, match the one pointing at the project the user picked. Ten minutes, exact answer.
+  </div>
+
+  <h3 style="margin:26px 0 10px;">The memory half</h3>
+  <div class="two-col">
+    <div class="card">
+      <h3>What you can measure, unprivileged</h3>
+      <div class="yes-no">
+        <div class="y">Live footprint of the toolchain process family — <code>Xcode</code>, <code>SourceKitService</code>, <code>swift-frontend</code>, <code>clang</code>, <code>XCBBuildService</code>, <code>simd</code>/simulator processes, and any <code>python</code>/MLX job — grouped and summed, via <code>proc_pid_rusage</code> and <code>ri_phys_footprint</code></div>
+        <div class="y">System-wide pressure, compression ratio and swap growth while a heavy job runs</div>
+        <div class="y">A "watch" mode: start recording, run your build or your MLX training, stop — get peak footprint, peak pressure, swap delta, and disk delta over that window</div>
+        <div class="n">Per-process heap breakdowns for Xcode (needs task_for_pid)</div>
+        <div class="n">Allocation stack traces or leak detection in other processes</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Why the watch mode matters</h3>
+      <p style="font-size:14.5px;color:var(--ink-2)">This is the part with no good existing tool. Activity Monitor shows you <em>now</em>; Instruments profiles <em>one process you launched</em>. Nothing gives a developer a labelled recording of "what did this build, or this MLX training run, cost my machine in memory, swap and disk."</p>
+      <p style="font-size:14.5px;color:var(--ink-2);margin-top:10px;">It is also the cheapest feature in the section: you already have the sampler and the ring buffer. Watch mode is a start marker, a stop marker, and max/delta reduction over the window. Under an hour.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Say this in the README, in one line.</strong> "MacEngine deliberately does not profile the app you are building — Instruments does that better. It profiles the <em>project and the toolchain</em>: what your workspace costs on disk, and what your Mac pays in memory while the toolchain works." Scoping stated confidently reads as engineering judgement.
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><h2>The schedule</h2></div>
+  <p class="prose" style="margin-bottom:8px;">Seven blocks, each ending in a gate. A gate is a thing you can see working — if you cannot see it, you do not start the next block, you cut scope from the current one. Times are elapsed hours from when you start, not clock times.</p>
+
+  <div class="day-label"><b>Today</b> &nbsp;&mdash;&nbsp; ten hours &nbsp;&mdash;&nbsp; the whole project has to exist by the end of this</div>
+  <div class="blocks">
+
+    <div class="block">
+      <div class="clock">H0 – H2<span>2h</span></div>
+      <div class="body">
+        <h3>A &middot; Skeleton that talks</h3>
+        <ul>
+          <li>New macOS app project, add an <strong>XPC Service</strong> target and a <strong>Shared</strong> framework target</li>
+          <li>Set <code>SWIFT_VERSION = 5</code> on every target before writing a line — Swift 6 strict concurrency will otherwise eat an hour of your day in actor-isolation errors</li>
+          <li>Turn off App Sandbox; signing set to "Sign to Run Locally"</li>
+          <li>Protocol + payload: keep <code>MetricSnapshot</code> a plain <code>Codable</code> struct and send it across XPC as <code>Data</code> — this avoids all <code>NSSecureCoding</code> boilerplate</li>
+          <li>One real CPU reading via <code>host_statistics64(HOST_CPU_LOAD_INFO)</code>, sampled in the service, displayed in the app</li>
+        </ul>
+        <div class="gate"><b>Gate A</b>A number produced in a different process is on screen. Nothing else matters yet.</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="clock">H2 – H4<span>2h</span></div>
+      <div class="body">
+        <h3>B &middot; Metrics and resilience</h3>
+        <ul>
+          <li>Finish <code>SystemSampler</code>: CPU tick deltas, <code>vm_statistics64</code> composition, <code>vm.swapusage</code>, pressure level, <code>statfs</code> disk</li>
+          <li>Reverse endpoint: app exports an object, service pushes a snapshot at 1 Hz instead of the app polling</li>
+          <li>Connection state machine with <code>invalidationHandler</code> and <code>interruptionHandler</code></li>
+          <li><code>crash()</code> in the XPC protocol, wired to a developer button in the app</li>
+        </ul>
+        <div class="gate"><b>Gate B</b>Click Kill Service. UI goes degraded, then recovers on its own, and the chart keeps going. Record a screen capture of this now, while it is fresh — this is the demo GIF.</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="clock">H4 – H6<span>2h</span></div>
+      <div class="body">
+        <h3>C &middot; Normal-mode dashboard</h3>
+        <ul>
+          <li>Three tiles, one Swift Charts line for CPU history backed by a fixed-capacity ring buffer</li>
+          <li>Process table: <code>proc_listpids</code> + <code>proc_pid_rusage</code>, top-K by a bounded heap rather than sorting the full list — this is the DSA answer, and it is also the honest reason to do it</li>
+          <li>Process enumeration on a 1 s cadence with cached names/paths; system metrics stay faster</li>
+          <li><code>NSStatusItem</code> menu-bar item with live CPU</li>
+        </ul>
+        <div class="gate"><b>Gate C</b>It looks like a real Mac app to someone glancing at your screen. Stop styling it now. <em>If you are behind here, cut the menu-bar item and move on.</em></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="clock">H6 – H8.5<span>2.5h</span></div>
+      <div class="body">
+        <h3>D &middot; Xcode Workspace Inspector</h3>
+        <ul>
+          <li><code>NSOpenPanel</code> restricted to <code>.xcodeproj</code> / <code>.xcworkspace</code></li>
+          <li>Resolve DerivedData by scanning each subfolder's <code>info.plist</code> for <code>WorkspacePath</code></li>
+          <li><code>DiskWalker</code>: <code>FileManager.enumerator</code> with <code>.totalFileAllocatedSizeKey</code>, run as a bounded concurrent walk over top-level children, results rolled up into a tree — deliberately written so it has a measurable hot path for tomorrow</li>
+          <li>Breakdown view: project dir, DerivedData subfolders, module cache, SPM cache, archives, simulator devices</li>
+          <li>Toolchain process attribution: group live processes by executable name into an "Xcode toolchain" bucket with summed footprint</li>
+        </ul>
+        <div class="gate"><b>Gate D</b>Pick a real project, see its true cost. On this Mac that should surface the 1.8 GB DerivedData folder and the 1.4 GB module cache.</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="clock">H8.5 – H10<span>1.5h</span></div>
+      <div class="body">
+        <h3>E &middot; Engineer Mode</h3>
+        <ul>
+          <li>Mode toggle as a single stored boolean read by each section</li>
+          <li>Distributed notifications posted for the five lifecycle events, rendered as a live event log</li>
+          <li>VM composition bar and the two-process address-space map via <code>mach_vm_region_recurse</code></li>
+          <li>Live topology panel with real PIDs and connection state</li>
+        </ul>
+        <div class="gate"><b>Gate E</b>Toggle changes the character of the app, and killing the service visibly changes the topology panel. <em>Stop for the day here even if a panel is unfinished.</em></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="day-label"><b>Tomorrow</b> &nbsp;&mdash;&nbsp; four hours &nbsp;&mdash;&nbsp; this is what converts a demo into a portfolio piece</div>
+  <div class="blocks">
+
+    <div class="block">
+      <div class="clock">H10 – H12<span>2h</span></div>
+      <div class="body">
+        <h3>F &middot; Tests, then the CLI</h3>
+        <ul>
+          <li>Four unit tests, one assertion each: CPU tick-delta normalisation, VM page composition summing to total, top-K selection correctness, directory size roll-up</li>
+          <li>Two integration tests: XPC round-trip returns a valid snapshot; after <code>crash()</code> the client reconnects and receives a snapshot within a timeout</li>
+          <li><em>Then, only if the clock allows:</em> Unix socket listener in the service and the <code>macengine-cli status</code> binary</li>
+        </ul>
+        <div class="gate"><b>Gate F</b>Tests green in CI-less local runs. The CLI is the sacrificial item — drop it without regret if tests took the full block.</div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="clock">H12 – H14<span>2h</span></div>
+      <div class="body">
+        <h3>G &middot; Instruments and the README</h3>
+        <ul>
+          <li>Time Profiler on a full DerivedData scan. Find the hot path, make one change, re-measure, write down both numbers</li>
+          <li>Leaks: run, confirm clean, screenshot</li>
+          <li>Allocations: note peak during a scan, and after if you changed anything</li>
+          <li><code>Documentation/instruments.md</code> with the two screenshots and the before/after table</li>
+          <li>README: architecture diagram, the six-sentence pitch as the feature list, the scoping paragraph about not profiling the built app, and the recovery GIF near the top</li>
+        </ul>
+        <div class="gate"><b>Gate G</b>A stranger reading the README in ninety seconds understands the architecture and sees the recovery working. Ship it.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><h2>Decisions made in advance</h2></div>
+  <p class="prose" style="margin-bottom:20px;">Each of these is a place where the default choice costs an hour or more. Make them now so you never stop to think about them.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Decision</th><th>Take this</th><th>Because</th></tr></thead>
+      <tbody>
+        <tr><td>Swift language mode</td><td class="mono">SWIFT_VERSION = 5</td><td>Xcode 26 defaults new targets to Swift 6. Strict concurrency across an XPC boundary is a genuine time sink and buys you nothing for this demo.</td></tr>
+        <tr><td>Background service</td><td class="mono">Embedded .xpc target</td><td>launchd already starts it on demand and relaunches it after a crash. You get the background-service story for free; a real LaunchAgent costs hours.</td></tr>
+        <tr><td>XPC payload</td><td class="mono">Codable → Data</td><td>NSXPCConnection wants NSSecureCoding. Encoding a Codable struct to Data and sending Data sidesteps all of it.</td></tr>
+        <tr><td>Metric delivery</td><td class="mono">Service pushes</td><td>App exports a listener endpoint; service calls into it. Makes the connection genuinely bidirectional, which is the stronger interview answer.</td></tr>
+        <tr><td>Sandbox</td><td class="mono">Off</td><td>Unblocks distributed-notification userInfo, /tmp sockets and DerivedData reads in one move. Document it as a deliberate choice for a local developer tool.</td></tr>
+        <tr><td>Privilege level</td><td class="mono">Never root</td><td>No task_for_pid, no helper install, no auth prompts. Scope the deep memory views to your own processes and say why.</td></tr>
+        <tr><td>Charts</td><td class="mono">Swift Charts</td><td>Built in, macOS 13+, and you are on 26.5. Zero custom drawing.</td></tr>
+        <tr><td>Persistence</td><td class="mono">None</td><td>Ring buffer in memory. History resets on relaunch and nobody will ask.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">09</span><h2>Landmines</h2></div>
+  <ul class="tight">
+    <li><strong>Distributed notifications need a run loop.</strong> If the service posts from a detached thread with no run loop and nothing arrives, that is why. Post from the main queue.</li>
+    <li><strong>Under the sandbox, distributed-notification userInfo is stripped.</strong> You are unsandboxed, so it works — but keep event payloads tiny anyway so the mechanism stays defensible.</li>
+    <li><strong>The XPC service is on-demand.</strong> It will not be running until the first message. Your "service down" state and your first connection look identical; make the state machine treat them the same and the recovery path is the same code as the startup path. That is a feature, not a bug — mention it.</li>
+    <li><strong>Integration tests need the host app.</strong> The <code>.xpc</code> is embedded in the app bundle, so the test bundle must be hosted by the app to reach it. Set the test host, or the connection will just fail with an obscure error.</li>
+    <li><strong>CPU percentages come from deltas, not absolutes.</strong> <code>host_statistics64</code> returns cumulative ticks. Two samples and a subtraction. Getting this wrong produces a number that looks plausible and is not — and it is exactly the kind of thing an interviewer probes.</li>
+    <li><strong>Use allocated size, not file size,</strong> for the disk walk, or your totals will not match Finder and someone will notice.</li>
+    <li><strong>Do not walk the whole home directory.</strong> Scope every scan to a known developer path. An accidental full-volume enumeration will hang the demo.</li>
+  </ul>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">10</span><h2>What each requirement maps to</h2></div>
+  <p class="prose" style="margin-bottom:20px;">Print this. It is the interview script, and it is also the final checklist — anything with an empty right-hand column at H14 is a gap you can name before they find it.</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Listed requirement</th><th>Proven by</th><th>Block</th></tr></thead>
+      <tbody>
+        <tr><td>Native macOS, Swift, Cocoa</td><td>SwiftUI dashboard plus an AppKit <span class="mono">NSStatusItem</span> and <span class="mono">NSOpenPanel</span></td><td class="mono">A, C, D</td></tr>
+        <tr><td>Multi-process architecture</td><td>App, XPC service, and (stretch) CLI as three real processes with live PIDs shown in Engineer Mode</td><td class="mono">A, E</td></tr>
+        <tr><td>XPC</td><td>Bidirectional connection with a reverse endpoint, not request/response</td><td class="mono">A, B</td></tr>
+        <tr><td>Distributed notifications</td><td>Five lifecycle events on a separate transport, with a stated reason for the split</td><td class="mono">E</td></tr>
+        <tr><td>Sockets / pipes</td><td>AF_UNIX listener plus <span class="mono">macengine-cli</span> — stretch</td><td class="mono">F</td></tr>
+        <tr><td>Background services</td><td>launchd-managed on-demand XPC service with automatic relaunch</td><td class="mono">A, B</td></tr>
+        <tr><td>Reliability, process lifecycle</td><td>The kill-and-recover demo and the connection state machine</td><td class="mono">B</td></tr>
+        <tr><td>Debugging</td><td>Engineer Mode's event log and pipeline timings; structured logging via <span class="mono">os.Logger</span> subsystems per process</td><td class="mono">E</td></tr>
+        <tr><td>Unit and integration testing</td><td>Four unit tests, two integration tests including the recovery path</td><td class="mono">F</td></tr>
+        <tr><td>Instruments, performance, memory</td><td>Time Profiler before/after on the directory walk, Leaks clean, Allocations peak — written up with numbers</td><td class="mono">G</td></tr>
+        <tr><td>Data structures</td><td>Ring buffer for history, bounded heap for top-K processes, tree roll-up for directory sizes</td><td class="mono">C, D</td></tr>
+        <tr><td>Objective-C</td><td>Optional <span class="mono">proc_listpids</span> wrapper with a bridging header — stretch</td><td class="mono">F</td></tr>
+        <tr><td>Mach ports</td><td>Not built. Answer: XPC is layered on Mach messaging; here is where I would have used the raw API and why I did not need to.</td><td class="mono">&mdash;</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">11</span><h2>Done means</h2></div>
+  <div class="prose">
+    <ul class="tight">
+      <li>The app runs from a clean clone with no setup steps beyond opening the project and pressing Run</li>
+      <li>Killing the monitoring service does not kill the app, and the recovery is visible in the README GIF above the fold</li>
+      <li>The Inspector produces a correct number for a real project on your Mac, and you have checked it against <code>du -sh</code></li>
+      <li>Six tests pass</li>
+      <li><code>Documentation/instruments.md</code> contains two real screenshots and one before/after measurement you can defend</li>
+      <li>The README states, in its own voice, what MacEngine deliberately does not do</li>
+    </ul>
+  </div>
+  <div class="note" style="margin-top:26px;">
+    <strong>If you only get eight hours today and nothing tomorrow:</strong> blocks A, B, C and D still constitute a complete, defensible project. You would be shipping without tests, Instruments and Engineer Mode — say so in the README as "next", which is a far better look than a half-finished panel. The one thing that must never be missing is the kill-and-recover demo.
+  </div>
+</section>
+
+<footer>
+  <span>MacEngine &middot; revised build plan</span>
+  <span>14 h &middot; 7 blocks &middot; 7 gates</span>
+  <span>macOS 26.5 &middot; Xcode 26.6 &middot; Swift 6.3</span>
+</footer>
+
+</div>

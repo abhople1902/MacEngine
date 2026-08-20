@@ -46,3 +46,11 @@ nonisolated protocol MetricsProviding: Sendable {
     /// One reading, taken now.
     func snapshot() async throws -> MetricSnapshot
 }
+
+/// Implemented only by providers whose work happens in another process, because
+/// only they have a process worth killing. The Diagnostics control is hidden
+/// when the active provider does not conform.
+nonisolated protocol CrashSimulating {
+    /// Terminates the backing process so the recovery path can be observed.
+    func simulateCrash() async
+}

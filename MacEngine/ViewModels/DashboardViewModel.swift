@@ -63,6 +63,9 @@ final class DashboardViewModel {
 
     var source: MetricsSource { provider.source }
 
+    /// Only an out-of-process provider has a process that can be killed.
+    var canSimulateCrash: Bool { provider is any CrashSimulating }
+
     /// Snapshots oldest to newest, for the history chart.
     var recentSnapshots: [MetricSnapshot] { history.elements }
 
@@ -93,11 +96,20 @@ final class DashboardViewModel {
         Task { [provider] in
             await provider.stop()
         }
-        record(.monitoringStopped)
+        recordLocalLifecycle(.monitoringStopped)
     }
 
     func toggle() {
         pollingTask == nil ? start() : stop()
+    }
+
+    /// Diagnostics: kills the monitoring process so the recovery path runs for
+    /// real. Nothing else changes — the sampling loop keeps running and simply
+    /// starts failing, which is the whole point.
+    func simulateServiceCrash() {
+        guard let provider = provider as? any CrashSimulating else { return }
+        Log.xpc.notice("Diagnostics requested a monitoring service crash")
+        Task { await provider.simulateCrash() }
     }
 
     func clearHistory() {
@@ -107,7 +119,7 @@ final class DashboardViewModel {
     }
 
     private func runSamplingLoop() async {
-        record(.monitoringStarted, detail: provider.source.displayName)
+        recordLocalLifecycle(.monitoringStarted, detail: provider.source.displayName)
 
         while !Task.isCancelled {
             do {
@@ -189,6 +201,16 @@ final class DashboardViewModel {
             }
         }
         eventObservers.store(tokens)
+    }
+
+    /// Start and stop describe the monitoring process, so when that process is
+    /// the service it announces them itself and this app hears them over
+    /// `DistributedNotificationCenter`. Recording them here as well would log
+    /// every start twice — and the arriving notification is the proof the
+    /// cross-process event path actually works.
+    private func recordLocalLifecycle(_ event: MonitoringEvent, detail: String? = nil) {
+        guard !provider.source.isolatesFailure else { return }
+        record(event, detail: detail)
     }
 
     /// Records an event this process raised, and broadcasts it so the CLI and

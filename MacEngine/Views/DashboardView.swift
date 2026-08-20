@@ -52,6 +52,10 @@ struct DashboardView: View {
                     ProcessListView(processes: model.latest?.topProcesses ?? [])
                 }
 
+                DashboardSection("Diagnostics") {
+                    DiagnosticsView(model: model)
+                }
+
                 DashboardSection("Lifecycle Events") {
                     EventLogView(records: model.events)
                 }

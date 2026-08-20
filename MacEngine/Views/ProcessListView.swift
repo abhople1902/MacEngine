@@ -3,8 +3,8 @@
 //  MacEngine
 //
 //  Rows arrive from the monitoring service. The app deliberately does not
-//  enumerate processes itself: that work belongs in the isolated process, and
-//  the App Sandbox on this target would block most of it anyway.
+//  enumerate processes itself: reading task info for processes it does not own
+//  is exactly the privileged work that belongs in the isolated process.
 //
 
 import SwiftUI

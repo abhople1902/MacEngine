@@ -13,7 +13,10 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-    let dashboard = DashboardViewModel()
+    // The app no longer samples anything itself: readings come from the
+    // monitoring service over XPC. `LocalMetricsProvider` remains as the
+    // in-process comparison and is what the unit tests drive.
+    let dashboard = DashboardViewModel(provider: XPCMetricsProvider())
 
     private var statusItemController: StatusItemController?
 
