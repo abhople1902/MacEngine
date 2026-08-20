@@ -1,0 +1,1271 @@
+<title>Darwin API Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --ground: #EFF3F7;
+    --surface: #FFFFFF;
+    --sunk: #E1E8EF;
+    --ink: #0E1620;
+    --ink-2: #43525F;
+    --ink-3: #74838F;
+    --rule: #D2DCE5;
+    --rule-strong: #B3C1CE;
+
+    --accent: #2C4BB8;
+    --accent-soft: #E2E8FA;
+    --built: #0B6E60;
+    --built-soft: #D8EDE9;
+    --planned: #8A6206;
+    --planned-soft: #F5E9D2;
+    --cut: #9C3B4B;
+    --cut-soft: #F6E2E5;
+
+    --focus: #2C4BB8;
+    --on-accent: #FFFFFF;
+
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0D1219;
+      --surface: #141C25;
+      --sunk: #0A0F15;
+      --ink: #E4EBF2;
+      --ink-2: #A6B4C2;
+      --ink-3: #71808F;
+      --rule: #232E3A;
+      --rule-strong: #35434F;
+
+      --accent: #8EA8FF;
+      --accent-soft: #1A2440;
+      --built: #4CC0AC;
+      --built-soft: #0D2B27;
+      --planned: #D9A945;
+      --planned-soft: #2E2412;
+      --cut: #E0808F;
+      --cut-soft: #2F1A1E;
+
+      --focus: #8EA8FF;
+      --on-accent: #0D1219;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0D1219;
+    --surface: #141C25;
+    --sunk: #0A0F15;
+    --ink: #E4EBF2;
+    --ink-2: #A6B4C2;
+    --ink-3: #71808F;
+    --rule: #232E3A;
+    --rule-strong: #35434F;
+
+    --accent: #8EA8FF;
+    --accent-soft: #1A2440;
+    --built: #4CC0AC;
+    --built-soft: #0D2B27;
+    --planned: #D9A945;
+    --planned-soft: #2E2412;
+    --cut: #E0808F;
+    --cut-soft: #2F1A1E;
+
+    --focus: #8EA8FF;
+    --on-accent: #0D1219;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1040px;
+    margin-inline: auto;
+    padding: 0 22px 80px;
+  }
+
+  a { color: var(--accent); }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  header.top {
+    padding: 46px 0 20px;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: clamp(30px, 5vw, 44px);
+    letter-spacing: -.01em;
+    line-height: 1.08;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    color: var(--ink-2);
+    max-width: 66ch;
+    margin: 0;
+  }
+
+  .standfirst code { font-size: .88em; }
+
+  /* ---------- counters ---------- */
+
+  .counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .count {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .04em;
+    padding: 5px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink-2);
+  }
+
+  .count b {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  /* ---------- control bar ---------- */
+
+  .controls {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+    padding: 14px 0 12px;
+    margin-bottom: 4px;
+  }
+
+  .searchrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 0 12px;
+  }
+
+  .searchrow:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .searchrow svg { flex: none; color: var(--ink-3); }
+
+  #q {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 11px 0;
+    min-width: 0;
+  }
+
+  #q::placeholder { color: var(--ink-3); }
+
+  .kbd {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--ink-3);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+
+  .chiprow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+    align-items: center;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .05em;
+    padding: 4px 9px;
+    border-radius: 2px;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background .12s, border-color .12s, color .12s;
+  }
+
+  .chip:hover { border-color: var(--rule-strong); }
+
+  .chip[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .chip.sep {
+    border: 0;
+    background: transparent;
+    cursor: default;
+    color: var(--ink-3);
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .chip.plain {
+    background: transparent;
+    border-style: dashed;
+  }
+
+  .statusline {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    padding: 12px 2px 8px;
+  }
+
+  .statusline b { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ---------- index rows ---------- */
+
+  .index {
+    border-top: 1px solid var(--rule);
+  }
+
+  .entry {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .entry.hidden { display: none; }
+
+  .rowbtn {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 14px;
+    align-items: baseline;
+    background: transparent;
+    border: 0;
+    text-align: left;
+    padding: 13px 6px;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+
+  .rowbtn:hover { background: var(--sunk); }
+
+  .symbol {
+    font-family: var(--mono);
+    font-size: 14.5px;
+    font-weight: 500;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .symbol .cat {
+    color: var(--ink-3);
+    font-weight: 400;
+  }
+
+  .symbol .caret {
+    color: var(--ink-3);
+    font-weight: 400;
+    display: inline-block;
+    width: 1em;
+  }
+
+  .entry[data-open="true"] .symbol .caret { color: var(--accent); }
+
+  .badges { display: flex; gap: 6px; align-items: center; flex: none; }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .badge.built { background: var(--built-soft); color: var(--built); }
+  .badge.planned { background: var(--planned-soft); color: var(--planned); }
+  .badge.cut { background: var(--cut-soft); color: var(--cut); }
+
+  .what {
+    grid-column: 1 / -1;
+    color: var(--ink-2);
+    font-size: 14px;
+    max-width: 78ch;
+  }
+
+  mark {
+    background: var(--accent-soft);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+  }
+
+  /* ---------- detail ---------- */
+
+  .detail {
+    display: none;
+    padding: 4px 6px 22px;
+  }
+
+  .entry[data-open="true"] .detail { display: block; }
+
+  .detail h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 18px 0 7px;
+    font-weight: 500;
+  }
+
+  .detail h4:first-child { margin-top: 6px; }
+
+  .usage {
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--ink-2);
+    max-width: 82ch;
+  }
+
+  .usage p { margin: 0 0 8px; }
+  .usage p:last-child { margin: 0; }
+
+  .ref {
+    display: block;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    overflow-wrap: anywhere;
+    margin-top: 6px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    background: var(--sunk);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 1px 4px;
+  }
+
+  .usage code, .qa code { background: var(--surface); }
+
+  .qa { list-style: none; margin: 0; padding: 0; max-width: 82ch; }
+
+  .qa li {
+    border-top: 1px dashed var(--rule);
+    padding: 11px 0;
+  }
+
+  .qa li:first-child { border-top: 0; padding-top: 4px; }
+
+  .qa .q {
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    gap: 8px;
+    font-size: 14.5px;
+  }
+
+  .qa .q::before {
+    content: "Q";
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    color: var(--accent);
+    padding-top: 4px;
+    flex: none;
+  }
+
+  .qa .a {
+    color: var(--ink-2);
+    font-size: 14px;
+    margin-top: 5px;
+    padding-left: 20px;
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 6px;
+  }
+
+  .links a {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    text-decoration: none;
+    border: 1px solid var(--rule-strong);
+    border-radius: 2px;
+    padding: 5px 10px;
+    color: var(--accent);
+    background: var(--surface);
+    transition: background .12s;
+  }
+
+  .links a:hover { background: var(--accent-soft); }
+  .links a::after { content: " \2197"; opacity: .6; }
+
+  .empty {
+    padding: 46px 6px;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  footer {
+    margin-top: 46px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  @media (max-width: 620px) {
+    .rowbtn { grid-template-columns: 1fr; }
+    .badges { justify-content: flex-start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="eyebrow">MacEngine &middot; interview reference</div>
+  <h1>Darwin API Console</h1>
+  <p class="standfirst">Every interface this project touches, plus the ones the LG posting names that it deliberately does not. Search it, filter it, then open a row for where it lives in the codebase and what an interviewer is likely to push on. Outbound links run the search for you.</p>
+  <div class="counts" id="counts"></div>
+</header>
+
+<div class="controls">
+  <label class="searchrow">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <circle cx="7" cy="7" r="4.6" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="host_statistics, interruption, sandbox, top-k, launchd&hellip;"
+           aria-label="Search interfaces and questions">
+    <span class="kbd" id="kbdhint">/</span>
+  </label>
+
+  <div class="chiprow" id="cats" role="group" aria-label="Filter by area"></div>
+  <div class="chiprow" id="stats" role="group" aria-label="Filter by build status">
+    <button class="chip" data-status="built" aria-pressed="false">built</button>
+    <button class="chip" data-status="planned" aria-pressed="false">planned</button>
+    <button class="chip" data-status="cut" aria-pressed="false">cut</button>
+    <span class="chip sep">|</span>
+    <button class="chip plain" id="expandAll" aria-pressed="false">expand all</button>
+    <button class="chip plain" id="reset">reset</button>
+  </div>
+</div>
+
+<div class="statusline">
+  <span id="showing"></span>
+  <span>click any row to open &middot; <b id="opencount">0</b> open</span>
+</div>
+
+<div class="index" id="index"></div>
+
+<footer>
+  <span>Darwin API Console</span>
+  <span>grounded in MacEngine @ block-b-xpc-service</span>
+  <span>macOS 26.5 &middot; Xcode 26.6 &middot; Swift 6.3</span>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var appleDoc = function (path) { return "https://developer.apple.com/documentation/" + path; };
+  var appleSearch = function (t) { return "https://developer.apple.com/search/?q=" + encodeURIComponent(t); };
+  var web = function (q) { return "https://www.google.com/search?q=" + encodeURIComponent(q); };
+  var wwdc = function (q) { return "https://developer.apple.com/videos/all-videos/?q=" + encodeURIComponent(q); };
+  var xnu = function (q) { return "https://github.com/apple-oss-distributions/xnu?q=" + encodeURIComponent(q); };
+
+  var CATEGORIES = {
+    mach: "mach",
+    proc: "proc",
+    xpc: "xpc",
+    ipc: "ipc",
+    life: "lifecycle",
+    conc: "concurrency",
+    ui: "appkit/ui",
+    sec: "security",
+    test: "testing",
+    perf: "instruments",
+    dsa: "data structures"
+  };
+
+  var DATA = [
+
+    /* ---------------- Mach ---------------- */
+    {
+      name: "host_statistics(HOST_CPU_LOAD_INFO)",
+      cat: "mach", status: "built",
+      what: "Cumulative CPU tick counters for the whole machine, split into user / system / idle / nice.",
+      usage: "The counters are monotonic totals since boot, so a single reading tells you nothing — utilisation only exists between two samples. MacEngine keeps the previous reading and divides the deltas by their sum. The first call after a reset has no baseline and honestly reports idle rather than inventing a number.",
+      ref: "Shared/Samplers/CPUSampler.swift:75",
+      ask: [
+        { q: "Why does your first CPU sample read 0%?", a: "Because there is no baseline yet. The kernel gives cumulative ticks; the first reading establishes the origin and the second is the first real measurement. Reporting usage from a single sample would actually be reporting average utilisation since boot." },
+        { q: "How do you avoid a crash when a counter wraps?", a: "Subtract with Swift's wrapping operator (&-) rather than plain minus. On overflow the wrapped delta is small and the sample is merely slightly wrong for one tick, instead of trapping." },
+        { q: "Why host_statistics and not host_statistics64 here?", a: "HOST_CPU_LOAD_INFO is defined over integer_t, so the 32-bit call is the correct one. HOST_VM_INFO64 needs the 64-bit variant because its page counts would overflow." }
+      ],
+      links: [["search", appleSearch("host_statistics")], ["xnu source", xnu("host_statistics")], ["web", web("host_statistics HOST_CPU_LOAD_INFO cpu_ticks example")]]
+    },
+    {
+      name: "host_statistics64(HOST_VM_INFO64)",
+      cat: "mach", status: "built",
+      what: "Machine-wide virtual memory page counts — free, active, inactive, wired, purgeable, compressed, speculative.",
+      usage: "Filled into a vm_statistics64_data_t and folded into the same three buckets Activity Monitor shows: app memory (anonymous minus purgeable), wired, and compressed. Every count is in pages, so each is multiplied by vm_kernel_page_size.",
+      ref: "Shared/Samplers/MemorySampler.swift:46",
+      ask: [
+        { q: "What is 'app memory' actually made of?", a: "Anonymous (internal) pages minus the purgeable ones, because purgeable pages are memory the system can reclaim on demand without swapping — counting them as used would overstate pressure." },
+        { q: "Why multiply by vm_kernel_page_size instead of 4096?", a: "Because 4096 is wrong on Apple Silicon, where the kernel page size is 16 KB. Hardcoding it would quietly under-report memory by 4x." },
+        { q: "Do these counts sum to physical RAM?", a: "Roughly, but not exactly — the counters are sampled without a global lock, and compressed pages represent more logical memory than they physically occupy. MacEngine takes total from ProcessInfo.physicalMemory instead of summing." }
+      ],
+      links: [["search", appleSearch("host_statistics64")], ["xnu source", xnu("vm_statistics64")], ["web", web("vm_statistics64_data_t compressor_page_count internal_page_count meaning")]]
+    },
+    {
+      name: "withMemoryRebound(to:capacity:)",
+      cat: "mach", status: "built",
+      what: "Swift's escape hatch for handing a typed struct to a C API that wants an array of a different type.",
+      usage: "Both Mach statistics calls want an integer_t* plus a count expressed in integer_t units. The Swift struct is rebound to integer_t for the duration of the call. Getting the count wrong here is the classic source of KERN_INVALID_ARGUMENT.",
+      ref: "Shared/Samplers/MemorySampler.swift:45",
+      ask: [
+        { q: "Why is the count MemoryLayout<T>.size / MemoryLayout<integer_t>.size?", a: "Mach expresses buffer sizes in units of the element type, not bytes. The call fails with KERN_INVALID_ARGUMENT if you pass a byte count." },
+        { q: "Is this undefined behaviour?", a: "No — withMemoryRebound is the sanctioned way to temporarily view memory as another layout-compatible type. It is only valid inside the closure, which is precisely why the API is shaped as a closure." }
+      ],
+      links: [["docs", appleDoc("swift/unsafemutablepointer/withmemoryrebound(to:capacity:_:)")], ["web", web("Swift withMemoryRebound mach host_statistics integer_t")]]
+    },
+    {
+      name: "mach_host_self()",
+      cat: "mach", status: "built",
+      what: "Returns a send right to the host port, the receiver for machine-wide statistics calls.",
+      usage: "Passed as the first argument to both statistics calls. Worth knowing the nuance: it returns a send right that strictly should be released with mach_port_deallocate. MacEngine does not, because the right is to the host port and the cost is one reference for the process lifetime — but being able to say that out loud is the point.",
+      ref: "Shared/Samplers/CPUSampler.swift:76",
+      ask: [
+        { q: "Does mach_host_self leak?", a: "It hands back a send right each call, and in a tight loop without mach_port_deallocate you would accumulate references. For a single host port acquired per sample it is negligible, but the honest answer is that a strict implementation deallocates it." },
+        { q: "What is a port right?", a: "A capability. A receive right lets you dequeue messages and only one task holds it; send rights let you enqueue and are freely copyable; send-once rights permit exactly one message, which is what reply ports use." }
+      ],
+      links: [["search", appleSearch("mach_host_self")], ["web", web("mach_host_self mach_port_deallocate send right leak")]]
+    },
+    {
+      name: "mach_vm_region_recurse",
+      cat: "mach", status: "planned",
+      what: "Walks a task's virtual address space region by region — heap, stack, __TEXT, mapped files, shared regions.",
+      usage: "Planned for Engineer Mode's address-space map. The critical constraint: you can read your own task's regions freely, but another process's requires task_for_pid, which needs root or a debugger entitlement. So the panel shows deep region maps for MacEngine's own two processes and footprint-level numbers for everyone else.",
+      ref: "not yet built — Engineer Mode, block E",
+      ask: [
+        { q: "Why not show region maps for every process?", a: "task_for_pid is gated behind root or com.apple.security.cs.debugger. Being able to name that boundary is more valuable than pretending it does not exist." },
+        { q: "What would you learn from a region map?", a: "Where the heap actually sits, how much of a process's footprint is shared library text mapped from the dyld shared cache rather than private dirty memory, and how stacks are sized per thread." }
+      ],
+      links: [["search", appleSearch("mach_vm_region_recurse")], ["web", web("mach_vm_region_recurse task_for_pid entitlement macOS")]]
+    },
+    {
+      name: "Mach ports",
+      cat: "mach", status: "cut",
+      what: "The kernel's fundamental IPC primitive: a unidirectional, kernel-mediated message queue addressed by capability.",
+      usage: "Deliberately not used directly. XPC is built on top of Mach messaging, so the project already demonstrates the mechanism at the level a macOS application should use it. That is the answer if asked why there is no raw mach_msg in the codebase.",
+      ref: "not used — see the plan's cut list",
+      ask: [
+        { q: "Have you used Mach ports?", a: "Indirectly and deliberately: NSXPCConnection is a typed object layer over libxpc, which is itself built on Mach messaging. Writing raw mach_msg would have demonstrated the same IPC boundary with far more code and no additional safety." },
+        { q: "How does a client find a service's port?", a: "Through the bootstrap server. A launchd job registers a name; clients call bootstrap_look_up to get a send right. XPC service lookup is the same mechanism with the plumbing hidden." },
+        { q: "Why is a Mach port unidirectional?", a: "One task holds the receive right; others hold send rights. Two-way communication means two ports — which is exactly why NSXPCConnection needs both an exportedInterface and a remoteObjectInterface to be bidirectional." }
+      ],
+      links: [["search", appleSearch("mach_msg")], ["web", web("mach ports bootstrap_look_up send receive right macOS IPC")]]
+    },
+
+    /* ---------------- libproc ---------------- */
+    {
+      name: "proc_listallpids()",
+      cat: "proc", status: "built",
+      what: "Fills a buffer with every pid on the system. Called with a null buffer first to size the allocation.",
+      usage: "The two-call dance: size, allocate, read. MacEngine asks for 64 slots of headroom, because processes can spawn between the sizing call and the read and the function silently truncates rather than failing.",
+      ref: "Shared/Samplers/ProcessSampler.swift:86",
+      ask: [
+        { q: "What is the race in the two-call pattern?", a: "The process table can grow between sizing and reading. proc_listallpids truncates silently, so without headroom you would quietly miss processes and never know. Over-allocating and trusting the returned count is the fix." },
+        { q: "Why not sysctl KERN_PROC_ALL?", a: "sysctl returns kinfo_proc structs with far more metadata in one call, which is better when you need names and parents. libproc is leaner when you only want pids and then task info, and its per-pid calls fail gracefully for processes you may not inspect." }
+      ],
+      links: [["search", appleSearch("proc_listallpids")], ["web", web("proc_listallpids libproc.h example truncation")]]
+    },
+    {
+      name: "proc_pidinfo(PROC_PIDTASKINFO)",
+      cat: "proc", status: "built",
+      what: "Per-process task info: cumulative user and system CPU time in nanoseconds, resident size, thread and page counts.",
+      usage: "One call per process, roughly 600 per sweep, which is exactly why process enumeration runs on a slower cadence than the Mach counters and is cached in between. A short read means the process died mid-call or is one this task may not inspect, so the row is skipped rather than reported as zero.",
+      ref: "Shared/Samplers/ProcessSampler.swift:104",
+      ask: [
+        { q: "Why check the return value against the struct size?", a: "proc_pidinfo returns bytes written. A short read is not an error code — it means you got a partial or empty struct, typically because the process exited between enumeration and inspection. Treating that as valid data would show phantom zero-usage rows." },
+        { q: "Is pti_resident_size what Activity Monitor shows?", a: "No, and this is worth being upfront about. Activity Monitor's Memory column is phys_footprint, available through proc_pid_rusage with RUSAGE_INFO_V4. RSS is close, simpler to read, and over-counts shared pages. It is a deliberate simplification, not an oversight." },
+        { q: "How do you turn nanoseconds into a percentage?", a: "Delta of (user + system) divided by wall-clock nanoseconds elapsed since the previous sweep. That yields share of one core, so a multi-threaded process legitimately exceeds 100%." }
+      ],
+      links: [["search", appleSearch("proc_pidinfo")], ["web", web("proc_pidinfo PROC_PIDTASKINFO proc_taskinfo pti_total_user")]]
+    },
+    {
+      name: "proc_pidpath() / proc_name()",
+      cat: "proc", status: "built",
+      what: "Resolve a pid to its executable path, or to a short truncated process name.",
+      usage: "proc_pidpath is by far the most expensive call in the sweep, and a pid's path never changes while it lives — so results are cached by pid and the cache is pruned of dead pids each sweep. proc_name is the fallback for system processes whose path cannot be read; it truncates, which is why it is second choice.",
+      ref: "Shared/Samplers/ProcessSampler.swift:116",
+      ask: [
+        { q: "Why cache names but not CPU times?", a: "Because they have opposite lifetimes. A path is immutable for the life of the pid; CPU time changes by definition every sample. Caching the immutable half is free accuracy; caching the other half would be a bug." },
+        { q: "Why does the cache get pruned?", a: "Processes die constantly. Without pruning against the current pid set, the dictionary grows for the life of the service — a slow leak that Allocations would eventually show as steadily climbing." },
+        { q: "Why is PROC_PIDPATHINFO_MAXSIZE not visible in Swift?", a: "It is a C macro, and macros defined as expressions do not import. The header defines it as 4 * MAXPATHLEN, so the Swift side computes the same value explicitly." }
+      ],
+      links: [["search", appleSearch("proc_pidpath")], ["web", web("proc_pidpath proc_name libproc macOS Swift")]]
+    },
+    {
+      name: "proc_pid_rusage(RUSAGE_INFO_V4)",
+      cat: "proc", status: "cut",
+      what: "Richer per-process accounting: phys_footprint, energy impact, disk I/O counters, instruction and cycle counts.",
+      usage: "Considered and not used. phys_footprint is what Activity Monitor reports, so this is the more faithful source — but it requires rebinding through rusage_info_t and adds a failure mode for a column the dashboard shows five of. Named here because 'why RSS and not footprint' is a fair question.",
+      ref: "not used — ProcessSampler uses PROC_PIDTASKINFO instead",
+      ask: [
+        { q: "What is phys_footprint that RSS is not?", a: "Footprint is the memory the process is actually charged for under memory pressure — it accounts for compressed pages and excludes shared clean pages that RSS counts. It is what the memory limit killer uses, which is why Activity Monitor shows it." }
+      ],
+      links: [["search", appleSearch("proc_pid_rusage")], ["web", web("proc_pid_rusage RUSAGE_INFO_V4 phys_footprint vs resident size")]]
+    },
+
+    /* ---------------- XPC ---------------- */
+    {
+      name: "NSXPCConnection",
+      cat: "xpc", status: "built",
+      what: "A typed, bidirectional connection to another process, with proxy objects standing in for remote instances.",
+      usage: "The app creates one with the service's bundle identifier and holds it inside an actor. Both directions are configured: remoteObjectInterface for what the service vends, exportedInterface plus exportedObject for what the app vends back so the service can push snapshots.",
+      ref: "MacEngine/Services/XPCMetricsProvider.swift:190",
+      ask: [
+        { q: "What makes the connection bidirectional rather than request/response?", a: "Setting exportedInterface and exportedObject on the client. Without them the app can only ever call the service; with them the service holds a proxy back to the app and pushes snapshots unprompted. MacEngine uses both directions — push for streaming, pull because a dead process cannot answer a request." },
+        { q: "Is NSXPCConnection thread-safe?", a: "Yes, it is documented as safe to use from multiple threads, which matters here because it is stored in an actor and messaged from the actor's executor. It is not Sendable though, so crossing it into an actor needs an explicit unchecked wrapper." },
+        { q: "Why did you choose NSXPCConnection over libxpc?", a: "The contract is an @objc protocol shared by both targets, so the type checker enforces it at compile time on both sides. libxpc would mean hand-packing xpc_dictionary messages, writing my own reverse channel, and interpreting XPC_ERROR_CONNECTION_INTERRUPTED by hand — the same semantics with more unsafe glue." }
+      ],
+      links: [["docs", appleDoc("foundation/nsxpcconnection")], ["wwdc", wwdc("XPC")], ["web", web("NSXPCConnection bidirectional exportedObject remoteObjectProxy example")]]
+    },
+    {
+      name: "interruptionHandler vs invalidationHandler",
+      cat: "xpc", status: "built",
+      what: "The two failure callbacks on a connection, and the single most likely thing to be asked about XPC.",
+      usage: "Interruption means the remote process died but the connection object survives and will relaunch the service on the next message. Invalidation is terminal — you called invalidate(), or the service could not be found at all — and the handler fires at most once. MacEngine records either as a reason, surfaces it through a thrown error, then rebuilds.",
+      ref: "MacEngine/Services/XPCMetricsProvider.swift:202",
+      ask: [
+        { q: "Your interruptionHandler fires. Is the connection still usable?", a: "Yes. That is the whole distinction. Interruption means the far end crashed; the connection remains valid and sending another message relaunches the service. Invalidation means it is permanently dead and every future message fails — you must build a new connection." },
+        { q: "When must the handlers be set?", a: "Before calling resume(). Setting them afterwards races with delivery and you can miss the callback entirely." },
+        { q: "How do you avoid a retain cycle in them?", a: "The handlers are stored on the connection, so capturing self strongly makes the connection own you while you own it. MacEngine captures weakly and also nils both handlers during teardown before invalidating." }
+      ],
+      links: [["docs", appleDoc("foundation/nsxpcconnection/interruptionhandler")], ["web", web("NSXPCConnection interruptionHandler vs invalidationHandler difference")]]
+    },
+    {
+      name: "NSXPCInterface",
+      cat: "xpc", status: "built",
+      what: "Wraps an @objc protocol so XPC knows which selectors are legal and what types may cross for each argument.",
+      usage: "Created for both protocols. Because MacEngine sends JSON-encoded Data rather than custom objects, no class whitelisting is needed — which sidesteps the most fiddly part of the API.",
+      ref: "MacEngine/Services/XPCMetricsProvider.swift:191",
+      ask: [
+        { q: "Why send Data instead of your model types?", a: "Custom classes crossing NSXPC must implement NSSecureCoding and be whitelisted per selector and argument index with setClasses:forSelector:argumentIndex:, and collections need every contained class listed. Encoding a Codable struct to JSON keeps the models as plain Swift structs that the CLI and tests can also use." },
+        { q: "What are the constraints on the protocol?", a: "It must be @objc, every method must return void, and anything you need back comes through a reply block whose parameters are also Objective-C representable. No async methods, no throwing." }
+      ],
+      links: [["docs", appleDoc("foundation/nsxpcinterface")], ["web", web("NSXPCInterface setClasses forSelector argumentIndex NSSecureCoding")]]
+    },
+    {
+      name: "NSXPCListener.service()",
+      cat: "xpc", status: "built",
+      what: "The listener an embedded XPC service creates for itself. resume() on it never returns.",
+      usage: "The service's main.swift builds one delegate holding a single shared MetricsCollector, so sampling state belongs to the process rather than to whichever connection happened to arrive. Each accepted connection gets its own lightweight exported object pointing at that shared actor.",
+      ref: "MonitoringService/main.swift:43",
+      ask: [
+        { q: "Why is state on the delegate rather than the exported object?", a: "Because a service can accept several connections and the sample counter, cadence and uptime describe the process, not a client. The exported object is per-connection and holds nothing but a reference to the shared actor." },
+        { q: "What does shouldAcceptNewConnection return false do?", a: "Rejects the connection — the client sees it invalidate immediately. That is the hook where you would check the peer's code signature or entitlements before agreeing to talk." },
+        { q: "How is this different from a launchd daemon's listener?", a: "A daemon uses NSXPCListener(machServiceName:) and needs a launchd plist, install step and signing story. NSXPCListener.service() is for a .xpc bundle embedded in an app, which launchd still manages — you get the on-demand launch and relaunch without writing any of that." }
+      ],
+      links: [["docs", appleDoc("foundation/nsxpclistener")], ["web", web("NSXPCListener service() delegate shouldAcceptNewConnection Swift")]]
+    },
+    {
+      name: "remoteObjectProxyWithErrorHandler",
+      cat: "xpc", status: "built",
+      what: "A proxy for the remote object whose error handler runs if the message cannot be delivered.",
+      usage: "Used for every call. The plain remoteObjectProxy silently drops failures, which for a monitoring app means the dashboard freezes on a stale number with no explanation. Every call site here pairs the error handler with the reply block and guards the continuation so exactly one of them resumes it.",
+      ref: "MacEngine/Services/XPCMetricsProvider.swift:104",
+      ask: [
+        { q: "Why guard the continuation if XPC promises only one callback fires?", a: "Because a checked continuation traps the process if that promise is ever broken, and a trap in the app is a worse outcome than a dropped sample. The guard is a small lock-protected box that takes the continuation once; it costs nothing and removes a whole class of crash." },
+        { q: "What happens if a reply block is never called?", a: "The awaiting task leaks — it is suspended forever. On the service side, dropping a reply block without calling it is the mirror-image bug, and NSXPC will log about it." },
+        { q: "What if you call a reply block twice?", a: "NSXPC raises an exception. Reply blocks are strictly call-once." }
+      ],
+      links: [["docs", appleDoc("foundation/nsxpcconnection/remoteobjectproxywitherrorhandler(_:)")], ["web", web("NSXPCConnection remoteObjectProxyWithErrorHandler async continuation Swift")]]
+    },
+    {
+      name: "XPCService ServiceType (Info.plist)",
+      cat: "xpc", status: "built",
+      what: "Declares how launchd instantiates the service — Application means one instance per client application.",
+      usage: "The generated Info.plist sets ServiceType to Application, which is what makes the service a private per-app helper rather than something shared system-wide. The bundle sits in Contents/XPCServices of the app and is found by bundle identifier.",
+      ref: "MonitoringService/Info.plist",
+      ask: [
+        { q: "Where does the service binary actually live?", a: "Inside the app bundle at Contents/XPCServices/MonitoringService.xpc, put there by a Copy Files build phase. Because it ships inside the app, it needs no installation, no plist in /Library and no admin rights." },
+        { q: "Who starts it?", a: "launchd, on demand, when the first message is sent to the connection. Nothing in the app spawns a process explicitly, and when it goes idle the system terminates it again." }
+      ],
+      links: [["search", appleSearch("XPCService ServiceType")], ["web", web("XPC service Info.plist ServiceType Application vs User macOS")]]
+    },
+    {
+      name: "libxpc (low-level C API)",
+      cat: "xpc", status: "cut",
+      what: "The C layer underneath NSXPCConnection: xpc_connection_t, xpc_dictionary_t, event handler blocks.",
+      usage: "Evaluated and rejected for this project. It is the right tool when there is no Objective-C runtime, or when you need to pass file descriptors, Mach ports or shared memory regions — none of which this project needs.",
+      ref: "not used — see the API-level decision in the plan",
+      ask: [
+        { q: "When would you drop to libxpc?", a: "Passing a file descriptor or Mach port across the boundary, using shared memory regions, scheduling background work with xpc_activity, or writing a daemon that has no Objective-C runtime available." },
+        { q: "How do errors surface in libxpc?", a: "As objects in the event handler — you compare against XPC_ERROR_CONNECTION_INTERRUPTED and XPC_ERROR_CONNECTION_INVALID. Same two-state model as the NSXPC handlers, just delivered as data rather than as separate callbacks." }
+      ],
+      links: [["search", appleSearch("xpc_connection_create")], ["web", web("libxpc xpc_connection_t XPC_ERROR_CONNECTION_INTERRUPTED example")]]
+    },
+
+    /* ---------------- other IPC ---------------- */
+    {
+      name: "DistributedNotificationCenter",
+      cat: "ipc", status: "built",
+      what: "System-wide, best-effort broadcast notifications delivered between processes by distnoted.",
+      usage: "Carries lifecycle events — started, stopped, unavailable, recovered, high CPU — explicitly not the metric stream. Streaming samples and rare state changes have different delivery requirements, so they get different transports. The service posts start and stop; the app only learns of them across the boundary, so if the path broke the events would vanish rather than appear to work.",
+      ref: "Shared/MonitoringEventBus.swift:23",
+      ask: [
+        { q: "Why not send lifecycle events over XPC too?", a: "Because they are broadcast, not point-to-point. The CLI and any future agent should hear them without holding a connection. It is also a deliberate demonstration that transport choice follows delivery requirements: XPC is reliable and ordered, distributed notifications are neither." },
+        { q: "What breaks under App Sandbox?", a: "The userInfo dictionary is dropped for sandboxed senders. MacEngine stamps the sender's pid into userInfo to ignore its own posts — sandboxed, that arrives empty, the guard rejects everything, and the app silently stops seeing events. It is a large part of why the sandbox is off." },
+        { q: "Why stamp the sender pid at all?", a: "Because the center delivers back to the posting process. Without the guard, every event the app raised would be recorded twice — once locally and once when its own broadcast came home." }
+      ],
+      links: [["docs", appleDoc("foundation/distributednotificationcenter")], ["web", web("DistributedNotificationCenter userInfo sandbox stripped macOS")]]
+    },
+    {
+      name: "Unix domain sockets (AF_UNIX)",
+      cat: "ipc", status: "planned",
+      what: "Byte-stream IPC addressed by a filesystem path, with access controlled by ordinary file permissions.",
+      usage: "The planned third front door: the service listens on a socket so macengine-cli can query it without launching the GUI. Chosen over Mach ports for the time budget — a listener plus a small client is a couple of hours, and it demonstrates a genuinely different IPC model.",
+      ref: "planned — MonitoringIdentifiers.diagnosticSocketPath",
+      ask: [
+        { q: "Socket versus Mach port — how do you choose?", a: "Sockets are byte streams with filesystem-based naming and permissions, portable to any Unix, and trivially testable with nc. Mach ports are capability-addressed through the bootstrap namespace, carry rights and typed messages, and are the native macOS primitive. For a diagnostic CLI the socket wins on simplicity and inspectability." },
+        { q: "What is the gotcha with binding?", a: "A stale socket file from a previous run makes bind fail with EADDRINUSE, so you unlink the path first. And the file must be somewhere writable that the sandbox does not rewrite under a container path." }
+      ],
+      links: [["search", appleSearch("unix domain socket")], ["web", web("AF_UNIX SOCK_STREAM bind listen accept Swift macOS example")]]
+    },
+    {
+      name: "Pipes",
+      cat: "ipc", status: "cut",
+      what: "Unidirectional byte channel between related processes, usually paired with fork/exec and dup2.",
+      usage: "Not used. The honest framing: pipes are for talking to a child process you spawned, and MacEngine's helper is launched by launchd rather than forked by the app, so there is no parent-child relationship to pipe through.",
+      ref: "not used",
+      ask: [
+        { q: "When would you reach for a pipe on macOS?", a: "Driving a command-line tool as a subprocess — which in Cocoa means Process with a Pipe on standardOutput. That is the same primitive with the fork/dup2 dance handled for you." },
+        { q: "Pipe versus socket?", a: "A pipe is unidirectional and only reaches processes related by fork, with no name in the filesystem unless it is a FIFO. A Unix socket is bidirectional, addressable by path, and reachable by any process with permission." }
+      ],
+      links: [["docs", appleDoc("foundation/pipe")], ["web", web("posix pipe dup2 fork exec macOS example")]]
+    },
+
+    /* ---------------- lifecycle ---------------- */
+    {
+      name: "launchd on-demand relaunch",
+      cat: "life", status: "built",
+      what: "launchd starts an XPC service on first message and restarts it after a crash, with no supervision code of your own.",
+      usage: "This is what makes the recovery demo real rather than staged. simulateCrash() calls exit(1) in the service; the app's next message causes launchd to spin up a brand new process. The integration test asserts the pid afterwards differs from the pid before, which is the only honest proof the process actually died.",
+      ref: "MonitoringService/MonitoringService.swift:59",
+      ask: [
+        { q: "How do you know the service really restarted rather than never dying?", a: "The test captures the service pid through serviceInfo(), triggers the crash, waits for snapshots to resume, then reads the pid again and asserts it changed. A new pid cannot be faked by a connection that merely stalled." },
+        { q: "Why does simulateCrash have no reply block?", a: "Because the process is gone before it could send one. That is deliberate — it is exactly the failure shape the app has to survive, so the API models it honestly." },
+        { q: "Does the service run forever once started?", a: "No. It is launched on demand and the system terminates it when idle. After the app quits, both processes disappear — verified by checking the process table after quitting." }
+      ],
+      links: [["search", appleSearch("launchd XPC service")], ["web", web("launchd on demand XPC service relaunch after crash macOS")]]
+    },
+    {
+      name: "SMAppService / LaunchAgent",
+      cat: "life", status: "cut",
+      what: "The modern API for registering a real background agent or daemon that runs independently of your app.",
+      usage: "Cut from scope on purpose. The embedded XPC service already is a launchd-managed background process, so the architecture point is made. A true agent adds plists, install logic, Login Items and a signing story — hours of work for a story the project already tells.",
+      ref: "cut — listed as future work",
+      ask: [
+        { q: "Why no LaunchAgent?", a: "It would demonstrate the same thing the XPC service already demonstrates: a process with a lifecycle managed by launchd rather than by my app. The difference is packaging and installation, which is real work but not additional architecture." },
+        { q: "What would change if you added one?", a: "The agent would outlive the app, so it needs its own idle and termination policy, a registration flow through SMAppService, and a way for the user to remove it from Login Items." }
+      ],
+      links: [["docs", appleDoc("servicemanagement/smappservice")], ["web", web("SMAppService register LaunchAgent macOS 13 login item")]]
+    },
+
+    /* ---------------- concurrency ---------------- */
+    {
+      name: "actor",
+      cat: "conc", status: "built",
+      what: "A reference type whose mutable state is serialised by its own executor, so concurrent access cannot race.",
+      usage: "Both providers and the service's collector are actors. It is the natural fit: XPC delivers on arbitrary queues, several connections may call at once, and the sample counters and caches are mutable state that would otherwise need a lock.",
+      ref: "MonitoringService/MetricsCollector.swift:28",
+      ask: [
+        { q: "What is actor reentrancy and where does it bite here?", a: "An actor releases its executor at every await, so another call can interleave mid-method. Any invariant assumed across an await must be re-checked afterwards. In the sampling loop that is why cancellation is re-checked after each suspension instead of once at the top." },
+        { q: "Why an actor rather than a serial DispatchQueue?", a: "Same serialisation guarantee, but enforced by the compiler rather than by convention, and it composes with async/await without blocking a thread while waiting." },
+        { q: "Can an actor deadlock?", a: "Not in the classic mutual-exclusion sense, because it suspends rather than blocks. You can still stall it forever by awaiting something that never completes — which is why an unresumed XPC reply block is a real hazard." }
+      ],
+      links: [["docs", appleDoc("swift/actor")], ["web", web("Swift actor reentrancy await interleaving explained")]]
+    },
+    {
+      name: "SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor",
+      cat: "conc", status: "built",
+      what: "A build setting that makes every unannotated declaration in a target MainActor-isolated by default.",
+      usage: "On for the app target, off for the service — and that asymmetry is deliberate. UI code wants main-actor defaults; a service whose callbacks arrive on arbitrary XPC queues does not. Everything in Shared/ is explicitly nonisolated so it compiles identically in both.",
+      ref: "app target only — project.pbxproj",
+      ask: [
+        { q: "Why is the service not MainActor by default?", a: "An XPC service has no meaningful main thread — NSXPCListener delivers on its own queues. Defaulting its code to the main actor would push every call through a thread that exists only to be a bottleneck." },
+        { q: "What broke when you turned this on?", a: "Every systems type had to be marked nonisolated explicitly — the models, the samplers, the event bus, the ring buffer, both @objc protocols. Anything reachable from a non-main context has to say so, and the error you get otherwise is 'main actor-isolated property cannot be referenced from a nonisolated context'." },
+        { q: "Why is the client's exported object nonisolated?", a: "Because XPC calls didProduceSnapshot from its own queue. Under MainActor-by-default that class would be main-isolated and the @objc entry point would be wrong." }
+      ],
+      links: [["search", appleSearch("default actor isolation")], ["web", web("SWIFT_DEFAULT_ACTOR_ISOLATION MainActor approachable concurrency SE-0466")]]
+    },
+    {
+      name: "Sendable / @unchecked Sendable",
+      cat: "conc", status: "built",
+      what: "The marker protocol for types safe to cross isolation boundaries, and the escape hatch that asserts it manually.",
+      usage: "Used exactly twice, both times with a written justification. NSXPCConnection is documented thread-safe but not Sendable, so handing one to an actor needs an unchecked wrapper; and the box holding distributed-notification tokens is unchecked so a nonisolated deinit can unregister them.",
+      ref: "MonitoringService/MetricsCollector.swift:17",
+      ask: [
+        { q: "When is @unchecked Sendable acceptable?", a: "When the type is genuinely safe for concurrent use but the compiler cannot see why — typically because safety comes from a documented guarantee or an internal lock rather than from immutability. It should carry a comment saying which, and both uses here do." },
+        { q: "Why did the token box need to exist at all?", a: "A deinit on a MainActor type cannot touch isolated state, so the observer tokens could not be unregistered from there. Moving them into a small nonisolated class gives them a deinit that is allowed to do the cleanup." }
+      ],
+      links: [["docs", appleDoc("swift/sendable")], ["web", web("Swift @unchecked Sendable when to use safely")]]
+    },
+    {
+      name: "withCheckedThrowingContinuation",
+      cat: "conc", status: "built",
+      what: "Bridges a completion-handler API into async/await, trapping if the continuation is resumed more or less than once.",
+      usage: "Every XPC call goes through one, because @objc protocols cannot be async. The reply block and the error handler both resume the same continuation, so a lock-protected box makes the resume exactly-once rather than trusting XPC's guarantee.",
+      ref: "MacEngine/Services/XPCMetricsProvider.swift:102",
+      ask: [
+        { q: "Checked or unsafe continuation?", a: "Checked in a bridge like this. It costs a little bookkeeping and turns a silent leak or double-resume into an immediate, obvious failure. Unsafe is for hot paths where the contract is already proven." },
+        { q: "Why did the Void continuations need explicit type annotations?", a: "With a generic helper taking either a throwing or non-throwing continuation, and a closure returning nothing, the compiler cannot infer T — it fails with 'generic parameter T could not be inferred'. Naming CheckedContinuation<Void, Error> resolves it." }
+      ],
+      links: [["docs", appleDoc("swift/withcheckedthrowingcontinuation(function:_:)")], ["web", web("withCheckedThrowingContinuation resume once completion handler bridge")]]
+    },
+    {
+      name: "Task cancellation",
+      cat: "conc", status: "built",
+      what: "Cooperative cancellation — a cancelled task keeps running until it checks, and sleeps throw rather than returning.",
+      usage: "The sampling loop checks isCancelled after each await rather than only at the top, because an actor can suspend for a long time mid-iteration. Task.sleep throwing on cancellation is what lets the loop exit promptly instead of finishing its interval.",
+      ref: "MacEngine/ViewModels/DashboardViewModel.swift:124",
+      ask: [
+        { q: "Why check cancellation more than once per iteration?", a: "Because every await is a suspension point where cancellation can arrive. Checking only at the top means one more full sample and one more state mutation after the user pressed Stop." },
+        { q: "Does cancelling a task stop the work in the service?", a: "No — cancellation is local to this process. Stopping the service means sending stopMonitoring across the connection, which is why stop() awaits that reply before tearing the connection down." }
+      ],
+      links: [["docs", appleDoc("swift/task/iscancelled")], ["web", web("Swift structured concurrency cooperative cancellation Task.sleep throws")]]
+    },
+
+    /* ---------------- UI ---------------- */
+    {
+      name: "@Observable / withObservationTracking",
+      cat: "ui", status: "built",
+      what: "The Observation framework: property-level change tracking that replaces ObservableObject and @Published.",
+      usage: "The dashboard view model is @Observable, so SwiftUI re-renders only for properties a view actually read. The menu-bar item is not a SwiftUI view, so it uses withObservationTracking directly — which fires exactly once and must re-arm itself inside its own onChange.",
+      ref: "MacEngine/App/AppDelegate.swift:51",
+      ask: [
+        { q: "What is the trap with withObservationTracking?", a: "It is one-shot. The onChange closure fires once and then observation is over; if you do not call it again from inside onChange, your AppKit view silently stops updating after the first change." },
+        { q: "Why is @Observable better than ObservableObject here?", a: "Tracking is per-property and established by actual access during body evaluation. With ObservableObject, any @Published change invalidates every observing view whether it read that property or not." }
+      ],
+      links: [["docs", appleDoc("observation")], ["web", web("withObservationTracking re-arm onChange AppKit Swift")]]
+    },
+    {
+      name: "NSStatusItem",
+      cat: "ui", status: "built",
+      what: "A menu bar item, obtained from NSStatusBar and owned for as long as it should stay visible.",
+      usage: "Shows live CPU next to a gauge symbol, driven from the same view model as the window. This is the AppKit integration that makes 'Cocoa' true rather than aspirational, and it costs about a hundred lines.",
+      ref: "MacEngine/App/StatusItemController.swift:25",
+      ask: [
+        { q: "What happens if you do not retain it?", a: "It disappears from the menu bar. NSStatusBar does not keep it alive for you, so the controller owning it is load-bearing, and its deinit removes it explicitly." },
+        { q: "Why monospaced digits in the title?", a: "Because proportional digits change width as the number changes, so the whole item jitters left and right once a second. NSFont.monospacedDigitSystemFont fixes the advance width without switching to a mono typeface." }
+      ],
+      links: [["docs", appleDoc("appkit/nsstatusitem")], ["web", web("NSStatusItem variableLength retain menu bar SwiftUI AppDelegate")]]
+    },
+    {
+      name: "NSApplicationDelegateAdaptor",
+      cat: "ui", status: "built",
+      what: "Attaches a real AppKit application delegate to a SwiftUI App, for the lifecycle hooks SwiftUI does not expose.",
+      usage: "Owns the view model and the status item, decides that closing the last window should not quit, and stops sampling on terminate. The bridge that lets a SwiftUI app still behave like a Mac app.",
+      ref: "MacEngine/App/MacEngineApp.swift:14",
+      ask: [
+        { q: "Why do you need an AppDelegate in a SwiftUI app at all?", a: "For things SwiftUI has no vocabulary for: menu bar items, applicationShouldTerminateAfterLastWindowClosed, and a place to own process-level objects that must outlive any window." }
+      ],
+      links: [["docs", appleDoc("swiftui/nsapplicationdelegateadaptor")], ["web", web("NSApplicationDelegateAdaptor SwiftUI macOS status item")]]
+    },
+    {
+      name: "Swift Charts",
+      cat: "ui", status: "built",
+      what: "Declarative charting in the SDK — AreaMark, LineMark, axis and scale modifiers.",
+      usage: "The CPU history chart, backed by the ring buffer, with the y-scale pinned to 0...1 so the line does not rescale itself into meaninglessness every time the peak changes. No third-party dependency, no custom drawing.",
+      ref: "MacEngine/Views/CPUHistoryChart.swift",
+      ask: [
+        { q: "Why fix the y-axis domain?", a: "An auto-scaled axis makes 3% CPU look identical to 90% CPU. For a utilisation chart the absolute scale is the information, so it is pinned to 0...1." }
+      ],
+      links: [["docs", appleDoc("charts")], ["web", web("Swift Charts AreaMark chartYScale domain macOS")]]
+    },
+
+    /* ---------------- security ---------------- */
+    {
+      name: "App Sandbox",
+      cat: "sec", status: "cut",
+      what: "A kernel-enforced restriction on what a process may read, write, connect to and inspect.",
+      usage: "Turned off on both targets, for two independent reasons. The service cannot read task info for processes it does not own while sandboxed, which is the entire reason it exists. And a sandboxed process has its userInfo stripped from distributed notifications, which would silently break the event path. Documented as a deliberate scoping decision for a local developer tool.",
+      ref: "ENABLE_APP_SANDBOX = NO on both targets",
+      ask: [
+        { q: "Would you ship it this way?", a: "Not to the App Store, which requires the sandbox. For a local developer tool it is the right trade, and the interesting part is that I can name exactly which two capabilities forced it rather than having switched it off on reflex." },
+        { q: "How did you verify the sandbox is actually off?", a: "By reading the signed entitlements out of the built bundles with codesign -d --entitlements, not by trusting the build setting. com.apple.security.app-sandbox is absent from both; only get-task-allow remains, which is the debug entitlement." },
+        { q: "Could the app stay sandboxed and only the service drop it?", a: "Partly — process enumeration would work, since it happens in the service. But the app is also a receiver of distributed notifications, and the userInfo restriction applies to sandboxed senders, so the events the service sends would arrive stripped." }
+      ],
+      links: [["search", appleSearch("app sandbox")], ["web", web("macOS App Sandbox distributed notification userInfo restriction")]]
+    },
+    {
+      name: "Hardened Runtime & entitlements",
+      cat: "sec", status: "built",
+      what: "Code-signing options that restrict runtime behaviour, plus the key-value claims a binary is signed with.",
+      usage: "Left on for both targets even with the sandbox off — they are separate mechanisms and confusing them is a common mistake. There is no .entitlements file in the project at all; Xcode synthesises entitlements from build settings.",
+      ref: "ENABLE_HARDENED_RUNTIME = YES",
+      ask: [
+        { q: "Sandbox versus hardened runtime — what is the difference?", a: "The sandbox restricts what resources a process may touch. The hardened runtime restricts what it may do to itself and its code — no unsigned executable memory, no library injection, no getting debugged without the entitlement. You can have either without the other." },
+        { q: "What is get-task-allow?", a: "The entitlement that permits a debugger to attach. It is present in debug builds and must not ship in a release build, since it hands anyone the ability to inspect the process." }
+      ],
+      links: [["search", appleSearch("hardened runtime")], ["web", web("hardened runtime vs app sandbox entitlements macOS difference")]]
+    },
+
+    /* ---------------- testing ---------------- */
+    {
+      name: "XCTest with a host application",
+      cat: "test", status: "built",
+      what: "Unit tests injected into a host app bundle, so they run with that app's identity, resources and embedded helpers.",
+      usage: "This is what makes the XPC integration tests possible at all: because the tests run inside MacEngine.app, NSXPCConnection(serviceName:) resolves the .xpc bundle embedded in that same app and really launches a second process. Nothing is mocked.",
+      ref: "MacEngineTests/XPCIntegrationTests.swift",
+      ask: [
+        { q: "How do you test a crash and a recovery without flaking?", a: "By polling for a condition with a deadline rather than sleeping a fixed amount. Process launch and XPC delivery have no guaranteed timing, so the test waits for snapshots to start failing, then waits for them to resume, each with a generous timeout." },
+        { q: "What does the recovery test actually assert?", a: "That the service's pid after recovery differs from the pid before the crash. Anything weaker — that snapshots resumed, say — would also pass if the service had never died." },
+        { q: "Why not mock the XPC layer?", a: "Because the mocked version of this test cannot fail for any of the reasons that matter. The interesting failures are in process launch, connection invalidation and launchd's relaunch behaviour, none of which a mock reproduces." }
+      ],
+      links: [["docs", appleDoc("xctest")], ["web", web("XCTest TEST_HOST unit test bundle app host XPC integration")]]
+    },
+
+    /* ---------------- instruments ---------------- */
+    {
+      name: "Time Profiler",
+      cat: "perf", status: "planned",
+      what: "A sampling profiler: it interrupts on a timer and records the stack, then aggregates by symbol.",
+      usage: "The planned target is the process sweep and the directory walk, both written to have a measurable hot path. The point is to record real before-and-after numbers rather than to claim familiarity.",
+      ref: "planned — block G",
+      ask: [
+        { q: "What does a sampling profiler miss?", a: "Anything short-lived relative to the sample interval. A function called ten thousand times for a microsecond each may barely appear, while one slow call is obvious. For counting calls you want instrumentation, not sampling." },
+        { q: "What would you expect the hot path to be here?", a: "proc_pidinfo, one call per process per sweep. That is precisely why enumeration runs on a slower cadence than the Mach counters and the result is cached in between — the optimisation is already in the code, waiting to be measured." }
+      ],
+      links: [["search", appleSearch("time profiler instruments")], ["web", web("Instruments Time Profiler sampling interval macOS how it works")]]
+    },
+    {
+      name: "Allocations, Leaks & Zombies",
+      cat: "perf", status: "planned",
+      what: "Heap growth over time, unreachable-but-unfreed memory, and messages sent to over-released objects.",
+      usage: "Named explicitly in the posting, so all three get run. The interesting candidate is the name cache in the process sampler — it is pruned against the live pid set each sweep specifically so it does not grow all day, and Allocations is how you prove that.",
+      ref: "planned — block G",
+      ask: [
+        { q: "Leak versus unbounded growth — which does Leaks catch?", a: "Only the first. Leaks finds memory nothing references any more. A cache that grows forever is still fully referenced, so Leaks says nothing and Allocations' growth graph is what exposes it." },
+        { q: "Are zombies still relevant in a Swift codebase?", a: "Less so — they detect messaging a deallocated Objective-C object. It still matters at the boundaries: an XPC exported object or a delegate released while a callback is in flight is exactly that bug." }
+      ],
+      links: [["search", appleSearch("instruments allocations leaks")], ["web", web("Instruments Allocations vs Leaks unbounded growth cache macOS")]]
+    },
+
+    /* ---------------- data structures ---------------- */
+    {
+      name: "BoundedTopK (min-heap)",
+      cat: "dsa", status: "built",
+      what: "Keeps the K highest-scoring items from a stream in O(n log k) time and O(k) space, without sorting the stream.",
+      usage: "There are roughly 600 processes and the dashboard shows five. Sorting the whole table to discard 99% of it is the obvious waste, so survivors live in a min-heap whose root is always the weakest — making the comparison against the incumbent O(1). Ties keep the incumbent so rows do not flicker.",
+      ref: "Shared/BoundedTopK.swift",
+      ask: [
+        { q: "Why a min-heap when you want the largest items?", a: "Because the element you need constant access to is the weakest survivor — the one a newcomer must beat. Putting the minimum at the root makes that test O(1) and the replacement O(log k)." },
+        { q: "When is the full sort actually better?", a: "When k approaches n, or when n is small enough that the constant factors dominate. At n=600 and k=5 the heap is clearly right; at k=500 you should just sort." },
+        { q: "Why do ties keep the incumbent?", a: "It is a UI decision expressed in the data structure. Strict greater-than means an equal-scoring newcomer cannot displace a row that is already on screen, so the table does not shuffle between samples for no reason." }
+      ],
+      links: [["web", web("top k elements min heap O(n log k) explanation")], ["search", appleSearch("Heap swift-collections")]]
+    },
+    {
+      name: "Fixed-capacity ring buffer",
+      cat: "dsa", status: "built",
+      what: "A circular buffer with O(1) append that overwrites the oldest element once full.",
+      usage: "Holds two minutes of history for the CPU chart. The alternative — an array you append to and trim from the front — is O(n) per sample because removing the first element shifts everything down.",
+      ref: "MacEngine/Support/RingBuffer.swift",
+      ask: [
+        { q: "Why not just cap an array?", a: "removeFirst() on an Array is O(n). At one sample a second it hardly matters, but it is O(n) work on the main actor forever, and the ring buffer is about fifty lines to make it O(1)." },
+        { q: "How do you read it back in order?", a: "The read start is the write index when full and zero otherwise, then you walk modulo capacity. That off-by-one is the part worth having a test for, and it does." }
+      ],
+      links: [["web", web("circular ring buffer fixed capacity O(1) append implementation")], ["search", appleSearch("Deque swift-collections")]]
+    },
+    {
+      name: "Codable over the wire",
+      cat: "dsa", status: "built",
+      what: "JSON-encoded structs crossing the XPC boundary as Data, instead of NSSecureCoding classes.",
+      usage: "Keeps every model a plain Swift struct that the app, the service, the tests and the future CLI all share, and sidesteps per-selector class whitelisting entirely. A test round-trips a snapshot through JSON specifically to catch a model change that would break the wire format.",
+      ref: "Shared/MetricSnapshot.swift",
+      ask: [
+        { q: "What does JSON cost you here?", a: "Encoding and decoding on both sides, and a larger payload than a binary keyed archive. At one snapshot a second with five process rows it is irrelevant — and if it ever mattered, the fix is a binary PropertyListEncoder, not NSSecureCoding." },
+        { q: "What breaks if you change a model?", a: "Both processes ship in the same bundle and are built together, so they cannot disagree. That would stop being true the moment the CLI is installed separately, which is when the format needs a version field." }
+      ],
+      links: [["docs", appleDoc("swift/codable")], ["web", web("NSSecureCoding vs Codable Data NSXPCConnection payload")]]
+    }
+  ];
+
+  /* ---------------- render ---------------- */
+
+  var index = document.getElementById("index");
+  var qInput = document.getElementById("q");
+  var showing = document.getElementById("showing");
+  var opencount = document.getElementById("opencount");
+  var catsBox = document.getElementById("cats");
+
+  var activeCats = new Set();
+  var activeStatus = new Set();
+
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  // counts strip
+  (function () {
+    var byStatus = { built: 0, planned: 0, cut: 0 };
+    DATA.forEach(function (d) { byStatus[d.status]++; });
+    var qCount = DATA.reduce(function (n, d) { return n + d.ask.length; }, 0);
+    document.getElementById("counts").innerHTML =
+      '<span class="count"><b>' + DATA.length + '</b> interfaces</span>' +
+      '<span class="count"><b>' + qCount + '</b> questions</span>' +
+      '<span class="count"><b>' + byStatus.built + '</b> built</span>' +
+      '<span class="count"><b>' + byStatus.planned + '</b> planned</span>' +
+      '<span class="count"><b>' + byStatus.cut + '</b> deliberately cut</span>';
+  })();
+
+  // category chips
+  Object.keys(CATEGORIES).forEach(function (key) {
+    var n = DATA.filter(function (d) { return d.cat === key; }).length;
+    if (!n) return;
+    var b = document.createElement("button");
+    b.className = "chip";
+    b.dataset.cat = key;
+    b.setAttribute("aria-pressed", "false");
+    b.textContent = CATEGORIES[key] + " " + n;
+    catsBox.appendChild(b);
+  });
+
+  DATA.forEach(function (d, i) {
+    var el = document.createElement("div");
+    el.className = "entry";
+    el.dataset.open = "false";
+    el.dataset.i = i;
+
+    var links = d.links.map(function (l) {
+      return '<a href="' + l[1] + '" target="_blank" rel="noopener noreferrer">' + esc(l[0]) + "</a>";
+    }).join("");
+
+    var qa = d.ask.map(function (a) {
+      return '<li><div class="q">' + esc(a.q) + '</div><div class="a">' + esc(a.a) + "</div></li>";
+    }).join("");
+
+    el.innerHTML =
+      '<button class="rowbtn" aria-expanded="false">' +
+        '<span class="symbol"><span class="caret">›</span><span class="cat">' + esc(CATEGORIES[d.cat]) + " ▸ </span>" + esc(d.name) + "</span>" +
+        '<span class="badges"><span class="badge ' + d.status + '">' + d.status + "</span></span>" +
+        '<span class="what">' + esc(d.what) + "</span>" +
+      "</button>" +
+      '<div class="detail">' +
+        "<h4>In MacEngine</h4>" +
+        '<div class="usage"><p>' + esc(d.usage) + '</p><span class="ref">' + esc(d.ref) + "</span></div>" +
+        "<h4>What they will ask</h4>" +
+        '<ul class="qa">' + qa + "</ul>" +
+        "<h4>Look it up</h4>" +
+        '<div class="links">' + links + "</div>" +
+      "</div>";
+
+    index.appendChild(el);
+  });
+
+  var entries = Array.prototype.slice.call(index.querySelectorAll(".entry"));
+
+  entries.forEach(function (el) {
+    var btn = el.querySelector(".rowbtn");
+    btn.addEventListener("click", function () {
+      var open = el.dataset.open === "true";
+      el.dataset.open = open ? "false" : "true";
+      btn.setAttribute("aria-expanded", open ? "false" : "true");
+      updateCounts();
+    });
+  });
+
+  function haystack(d) {
+    return (d.name + " " + d.what + " " + d.usage + " " + d.ref + " " + CATEGORIES[d.cat] + " " + d.status + " " +
+      d.ask.map(function (a) { return a.q + " " + a.a; }).join(" ")).toLowerCase();
+  }
+
+  var HAY = DATA.map(haystack);
+
+  function apply() {
+    var terms = qInput.value.toLowerCase().split(/\s+/).filter(Boolean);
+    var visible = 0;
+
+    entries.forEach(function (el, i) {
+      var d = DATA[i];
+      var ok = true;
+      if (activeCats.size && !activeCats.has(d.cat)) ok = false;
+      if (ok && activeStatus.size && !activeStatus.has(d.status)) ok = false;
+      if (ok && terms.length) {
+        ok = terms.every(function (t) { return HAY[i].indexOf(t) !== -1; });
+      }
+      el.classList.toggle("hidden", !ok);
+      if (ok) visible++;
+    });
+
+    showing.innerHTML = "showing <b>" + visible + "</b> of <b>" + DATA.length + "</b>";
+
+    var empty = document.getElementById("emptyState");
+    if (!visible) {
+      if (!empty) {
+        empty = document.createElement("div");
+        empty.id = "emptyState";
+        empty.className = "empty";
+        empty.textContent = "No interface matches that. Try a looser term — the index also searches the answers.";
+        index.appendChild(empty);
+      }
+    } else if (empty) {
+      empty.remove();
+    }
+    updateCounts();
+  }
+
+  function updateCounts() {
+    var n = entries.filter(function (el) {
+      return el.dataset.open === "true" && !el.classList.contains("hidden");
+    }).length;
+    opencount.textContent = n;
+  }
+
+  qInput.addEventListener("input", apply);
+
+  catsBox.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-cat]");
+    if (!b) return;
+    var k = b.dataset.cat;
+    if (activeCats.has(k)) { activeCats.delete(k); b.setAttribute("aria-pressed", "false"); }
+    else { activeCats.add(k); b.setAttribute("aria-pressed", "true"); }
+    apply();
+  });
+
+  document.getElementById("stats").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-status]");
+    if (!b) return;
+    var k = b.dataset.status;
+    if (activeStatus.has(k)) { activeStatus.delete(k); b.setAttribute("aria-pressed", "false"); }
+    else { activeStatus.add(k); b.setAttribute("aria-pressed", "true"); }
+    apply();
+  });
+
+  document.getElementById("expandAll").addEventListener("click", function () {
+    var anyClosed = entries.some(function (el) {
+      return !el.classList.contains("hidden") && el.dataset.open === "false";
+    });
+    entries.forEach(function (el) {
+      if (el.classList.contains("hidden")) return;
+      el.dataset.open = anyClosed ? "true" : "false";
+      el.querySelector(".rowbtn").setAttribute("aria-expanded", anyClosed ? "true" : "false");
+    });
+    this.setAttribute("aria-pressed", anyClosed ? "true" : "false");
+    this.textContent = anyClosed ? "collapse all" : "expand all";
+    updateCounts();
+  });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    qInput.value = "";
+    activeCats.clear();
+    activeStatus.clear();
+    document.querySelectorAll(".chip[aria-pressed]").forEach(function (c) {
+      c.setAttribute("aria-pressed", "false");
+    });
+    entries.forEach(function (el) {
+      el.dataset.open = "false";
+      el.querySelector(".rowbtn").setAttribute("aria-expanded", "false");
+    });
+    document.getElementById("expandAll").textContent = "expand all";
+    apply();
+    qInput.focus();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var typing = /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (e.key === "/" && !typing) { e.preventDefault(); qInput.focus(); qInput.select(); }
+    if (e.key === "k" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); qInput.focus(); qInput.select(); }
+    if (e.key === "Escape" && typing) { qInput.value = ""; apply(); qInput.blur(); }
+  });
+
+  if (navigator.platform.indexOf("Mac") === 0) {
+    document.getElementById("kbdhint").textContent = "⌘K";
+  }
+
+  apply();
+})();
+</script>
