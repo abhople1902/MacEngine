@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Xcode per-user state — window layout, breakpoints, which scheme was last
+# selected. Regenerated constantly and specific to one developer's machine.
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# Build output
+build/
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# Instruments
+*.trace
