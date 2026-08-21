@@ -260,6 +260,18 @@
     border-style: dashed;
   }
 
+  .chip.jump {
+    text-decoration: none;
+    display: inline-block;
+    line-height: 1.4;
+    margin-left: auto;
+  }
+
+  .chip.jump:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
   .statusline {
     display: flex;
     justify-content: space-between;
@@ -485,6 +497,269 @@
     gap: 10px;
   }
 
+
+  /* ---------- flow map ---------- */
+
+  .fm {
+    scroll-margin-top: 128px;
+    margin-top: 72px;
+    padding-top: 34px;
+    border-top: 2px solid var(--rule-strong);
+  }
+
+  .fm .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .fm h2 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: clamp(24px, 3.6vw, 34px);
+    letter-spacing: -.01em;
+    line-height: 1.1;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+
+  .fm h3 {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 21px;
+    letter-spacing: -.005em;
+    margin: 58px 0 6px;
+    text-wrap: balance;
+  }
+
+  .fm > p, .fm-sub {
+    color: var(--ink-2);
+    max-width: 68ch;
+    margin: 0 0 4px;
+  }
+
+  .fm-sub { font-size: 14px; margin-bottom: 22px; }
+
+  /* figures */
+
+  .fig { margin: 26px 0 0; }
+
+  .fig-scroll { overflow-x: auto; }
+
+  .fig svg {
+    display: block;
+    width: 100%;
+    min-width: 720px;
+    height: auto;
+  }
+
+  .fig figcaption {
+    font-size: 13px;
+    color: var(--ink-3);
+    max-width: 80ch;
+    margin-top: 12px;
+    padding-left: 12px;
+    border-left: 2px solid var(--rule);
+  }
+
+  .fig .band,
+  .fig .box {
+    fill: var(--surface);
+    stroke: var(--rule-strong);
+    stroke-width: 1;
+  }
+
+  .fig .box.hot {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+  }
+
+  .fig .strap {
+    fill: var(--sunk);
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+
+  .fig .enclose {
+    fill: none;
+    stroke: var(--rule-strong);
+    stroke-width: 1;
+    stroke-dasharray: 3 6;
+  }
+
+  .fig .knock { fill: var(--ground); stroke: none; }
+
+  .fig .wire {
+    stroke: var(--ink-3);
+    stroke-width: 1.4;
+    fill: none;
+  }
+
+  .fig .wire.accent { stroke: var(--accent); }
+  .fig .wire.dash { stroke-dasharray: 5 4; }
+
+  .fig .lifeline {
+    stroke: var(--rule-strong);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
+  }
+
+  .fig .mk { fill: var(--ink-3); }
+  .fig .mk.accent { fill: var(--accent); }
+
+  .fig text {
+    font-family: var(--mono);
+    fill: var(--ink);
+  }
+
+  .fig .t-hd {
+    font-family: var(--cond);
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: .03em;
+  }
+
+  .fig .t-lb { font-size: 11.5px; }
+  .fig .t-cat { font-size: 11.5px; fill: var(--accent); }
+  .fig .t-sm { font-size: 10.5px; fill: var(--ink-3); }
+
+  .fig .t-ax {
+    font-size: 10px;
+    letter-spacing: .12em;
+    fill: var(--ink-3);
+  }
+
+  /* layer table */
+
+  .fm-layers { margin: 24px 0 0; }
+
+  .fm-layer {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 4px 28px;
+    padding: 15px 2px;
+    border-top: 1px dashed var(--rule);
+  }
+
+  .fm-layer:first-child { border-top: 1px solid var(--rule-strong); }
+  .fm-layer:last-child { border-bottom: 1px solid var(--rule-strong); }
+
+  .fm-layer dt {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .fm-name {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .fm-cats {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    overflow-wrap: anywhere;
+  }
+
+  .fm-layer dd {
+    margin: 0;
+    font-size: 14px;
+    color: var(--ink-2);
+    max-width: 74ch;
+  }
+
+  /* ordered call chain */
+
+  .fm-steps {
+    counter-reset: fmstep;
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    max-width: 86ch;
+  }
+
+  .fm-steps li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 4px 12px;
+    padding: 11px 0;
+    border-top: 1px dashed var(--rule);
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .fm-steps li:first-child { border-top: 1px solid var(--rule-strong); }
+  .fm-steps li:last-child { border-bottom: 1px solid var(--rule-strong); }
+
+  .fm-steps li::before {
+    counter-increment: fmstep;
+    content: counter(fmstep) ".";
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .fm-steps .call {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 3px;
+    overflow-wrap: anywhere;
+  }
+
+  .fm-steps .call em {
+    font-style: normal;
+    color: var(--ink-3);
+  }
+
+  /* say-it-out-loud block */
+
+  .fm-say {
+    margin-top: 40px;
+    border-left: 3px solid var(--accent);
+    background: var(--sunk);
+    padding: 18px 20px;
+    border-radius: 0 3px 3px 0;
+    max-width: 84ch;
+  }
+
+  .fm-say h4 {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 10px;
+    font-weight: 500;
+  }
+
+  .fm-say p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.62;
+    color: var(--ink);
+  }
+
+  .fm-note {
+    margin: 20px 0 0;
+    font-size: 14px;
+    color: var(--ink-2);
+    max-width: 78ch;
+  }
+
+  @media (max-width: 700px) {
+    .fm-layer { grid-template-columns: 1fr; gap: 8px; }
+  }
+
   @media (max-width: 620px) {
     .rowbtn { grid-template-columns: 1fr; }
     .badges { justify-content: flex-start; }
@@ -524,6 +799,7 @@
     <span class="chip sep">|</span>
     <button class="chip plain" id="expandAll" aria-pressed="false">expand all</button>
     <button class="chip plain" id="reset">reset</button>
+    <a class="chip plain jump" href="#flow">how it fits together &darr;</a>
   </div>
 </div>
 
@@ -534,9 +810,230 @@
 
 <div class="index" id="index"></div>
 
+
+<section class="fm" id="flow">
+
+  <div class="kicker">beyond the index</div>
+  <h2>How it fits together</h2>
+  <p>The index above is sorted by area, which deliberately says nothing about order or dependency. This is the other half of the reference: which layer each area belongs to, what each one is allowed to know, and the exact path a number takes from a kernel counter to a pixel.</p>
+
+  <h3>Three layers and two straps</h3>
+  <p class="fm-sub">Eleven areas, but they are not eleven peers. Three of them stack; the rest either cut across the stack or surround it.</p>
+
+  <figure class="fig">
+    <div class="fig-scroll">
+      <svg viewBox="0 0 950 380" role="img" aria-label="Three stacked layers — presentation, process boundary, kernel surface — with concurrency and data structures as a strap on the left, security as a strap on the right, and testing and instruments enclosing everything. Measurements travel up the stack; commands travel down.">
+        <defs>
+          <marker id="f1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="mk"/>
+          </marker>
+          <marker id="f1b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="mk accent"/>
+          </marker>
+        </defs>
+
+        <rect class="enclose" x="6" y="6" width="938" height="352" rx="4"/>
+        <rect class="knock" x="288" y="347" width="384" height="22"/>
+        <text class="t-ax" x="480" y="362" text-anchor="middle">TESTING &#183; INSTRUMENTS &#183; PROVES EVERYTHING INSIDE</text>
+
+        <rect class="strap" x="22" y="30" width="54" height="278" rx="2"/>
+        <text class="t-ax" transform="translate(50,169) rotate(-90)" text-anchor="middle">CONCURRENCY &#183; DATA STRUCTURES</text>
+
+        <rect class="strap" x="868" y="30" width="54" height="278" rx="2"/>
+        <text class="t-ax" transform="translate(896,169) rotate(-90)" text-anchor="middle">SECURITY &#183; THE SANDBOX CALL</text>
+
+        <rect class="band" x="92" y="30" width="760" height="70" rx="2"/>
+        <text class="t-hd" x="112" y="58">PRESENTATION</text>
+        <text class="t-cat" x="112" y="80">appkit/ui</text>
+        <text class="t-sm" x="832" y="80" text-anchor="end">SwiftUI &#183; NSStatusItem &#183; Charts &#183; @MainActor</text>
+
+        <line class="wire accent" x1="300" y1="132" x2="300" y2="104" marker-end="url(#f1b)"/>
+        <text class="t-sm" x="312" y="121">decoded MetricSnapshot</text>
+        <line class="wire" x1="600" y1="102" x2="600" y2="130" marker-end="url(#f1a)"/>
+        <text class="t-sm" x="612" y="121">user intent &#183; start / stop / scan</text>
+
+        <rect class="band" x="92" y="134" width="760" height="70" rx="2"/>
+        <text class="t-hd" x="112" y="162">PROCESS BOUNDARY</text>
+        <text class="t-cat" x="112" y="184">xpc &#183; ipc &#183; lifecycle</text>
+        <text class="t-sm" x="832" y="184" text-anchor="end">NSXPCConnection &#183; launchd &#183; DistributedNotificationCenter</text>
+
+        <line class="wire accent" x1="300" y1="236" x2="300" y2="208" marker-end="url(#f1b)"/>
+        <text class="t-sm" x="312" y="225">encoded snapshot &#183; Data</text>
+        <line class="wire" x1="600" y1="206" x2="600" y2="234" marker-end="url(#f1a)"/>
+        <text class="t-sm" x="612" y="225">startMonitoring(interval:)</text>
+
+        <rect class="band" x="92" y="238" width="760" height="70" rx="2"/>
+        <text class="t-hd" x="112" y="266">KERNEL SURFACE</text>
+        <text class="t-cat" x="112" y="288">mach &#183; proc</text>
+        <text class="t-sm" x="832" y="288" text-anchor="end">host_statistics &#183; host_statistics64 &#183; proc_listallpids &#183; proc_pidinfo</text>
+      </svg>
+    </div>
+    <figcaption>Only two areas produce a number; everything else moves, shrinks, guards, draws or proves numbers those two produced. The straps are the areas that refuse to sit on one layer &mdash; actors and the bounded containers appear on both sides of the process boundary, and the sandbox decision reaches down into what the kernel layer may see <em>and</em> out into what the boundary is allowed to carry.</figcaption>
+  </figure>
+
+  <dl class="fm-layers">
+    <div class="fm-layer">
+      <dt><span class="fm-name">layer 1 &#183; bottom</span><span class="fm-cats">mach &#183; proc</span></dt>
+      <dd>The only families that actually measure anything. <code>host_statistics</code> answers &ldquo;what is the machine doing&rdquo;, <code>proc_pidinfo</code> answers &ldquo;which process is doing it&rdquo;, and neither is meaningful from a single call &mdash; both return cumulative counters, so a rate only exists between two samples. Nothing above this layer talks to the kernel.</dd>
+    </div>
+    <div class="fm-layer">
+      <dt><span class="fm-name">layer 2 &#183; middle</span><span class="fm-cats">xpc &#183; ipc &#183; lifecycle</span></dt>
+      <dd>Everything that exists only because MacEngine is two processes instead of one. <code>NSXPCConnection</code> carries the payload, <code>launchd</code> decides when the second process exists at all, and <code>DistributedNotificationCenter</code> carries the human-readable event stream that has to survive either side dying.</dd>
+    </div>
+    <div class="fm-layer">
+      <dt><span class="fm-name">layer 3 &#183; top</span><span class="fm-cats">appkit/ui</span></dt>
+      <dd>The only layer with no measurement code in it whatsoever. It renders whatever the last decoded snapshot said and never blocks on the service &mdash; which is why a crash below it changes the status pill rather than blanking the window.</dd>
+    </div>
+    <div class="fm-layer">
+      <dt><span class="fm-name">strap &#183; both sides</span><span class="fm-cats">concurrency &#183; data structures</span></dt>
+      <dd>Cross-cutting, because both processes need it. Actors serialise mutable sampler state so no lock is required; <code>BoundedTopK</code> reduces ~600 processes to 5 <em>before</em> anything is encoded, so payload size does not track process count; <code>RingBuffer</code> caps chart history at 120 samples so an all-day run has a flat memory profile.</dd>
+    </div>
+    <div class="fm-layer">
+      <dt><span class="fm-name">strap &#183; a gate, not a layer</span><span class="fm-cats">security</span></dt>
+      <dd>One decision reaching in two directions. App Sandbox blocks <code>proc_pidinfo</code> for foreign processes (layer 1) <em>and</em> strips <code>userInfo</code> from distributed notifications (layer 2), so turning it off was one call with two consequences &mdash; and <code>task_for_pid</code> is the boundary that keeps region maps limited to MacEngine&rsquo;s own two processes.</dd>
+    </div>
+    <div class="fm-layer">
+      <dt><span class="fm-name">enclosure &#183; around all of it</span><span class="fm-cats">testing &#183; instruments</span></dt>
+      <dd>Aimed at every layer independently: samplers unit-tested without a connection, the XPC contract tested across a real process boundary, and Time Profiler pointed at the sampling loop. The one thing they proved that reading the code did not: a synchronous walk that never yields will occupy every thread in the cooperative pool and starve the task trying to cancel it.</dd>
+    </div>
+  </dl>
+
+  <h3>One tick, end to end</h3>
+  <p class="fm-sub">The steady state, once a second, in the order it actually happens. Time runs downward; each horizontal arrow crosses a real process boundary.</p>
+
+  <figure class="fig">
+    <div class="fig-scroll">
+      <svg viewBox="0 0 950 600" role="img" aria-label="Sequence diagram: the app sends startMonitoring to the XPC service, which replies; the service then runs a one-hertz loop calling CPUSampler, MemorySampler, ProcessSampler, BoundedTopK and JSONEncoder, and pushes each snapshot back one-way via didProduceSnapshot; the app decodes it, stores it in the provider actor, and appends it to a 120-sample ring buffer for SwiftUI. A dashed pull path shows currentSnapshot used only when a push is late.">
+        <defs>
+          <marker id="f2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="mk"/>
+          </marker>
+          <marker id="f2b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="mk accent"/>
+          </marker>
+        </defs>
+
+        <line class="lifeline" x1="210" y1="62" x2="210" y2="592"/>
+        <line class="lifeline" x1="730" y1="62" x2="730" y2="592"/>
+
+        <rect class="box hot" x="70" y="14" width="280" height="48" rx="2"/>
+        <text class="t-hd" x="210" y="36" text-anchor="middle">MacEngine.app</text>
+        <text class="t-sm" x="210" y="53" text-anchor="middle">PID A &#183; MainActor UI + provider actor</text>
+
+        <rect class="box" x="590" y="14" width="280" height="48" rx="2"/>
+        <text class="t-hd" x="730" y="36" text-anchor="middle">MonitoringService.xpc</text>
+        <text class="t-sm" x="730" y="53" text-anchor="middle">PID B &#183; launchd-started &#183; collector actor</text>
+
+        <text class="t-lb" x="216" y="90">startMonitoring(interval: 1.0)</text>
+        <line class="wire" x1="210" y1="98" x2="724" y2="98" marker-end="url(#f2a)"/>
+        <text class="t-sm" x="216" y="113">remoteObjectProxyWithErrorHandler &#183; this first message is what starts the process</text>
+
+        <text class="t-lb" x="724" y="140" text-anchor="end">reply(true)</text>
+        <line class="wire dash" x1="730" y1="148" x2="216" y2="148" marker-end="url(#f2a)"/>
+        <text class="t-sm" x="724" y="163" text-anchor="end">an @escaping reply block is XPC&#8217;s only return path &#183; a remote call cannot return a value</text>
+
+        <rect class="box" x="530" y="186" width="400" height="176" rx="2"/>
+        <text class="t-hd" x="550" y="209">1 Hz Task loop &#183; collector actor</text>
+        <text class="t-lb" x="550" y="236">CPUSampler</text>
+        <text class="t-sm" x="910" y="236" text-anchor="end">host_statistics(HOST_CPU_LOAD_INFO)</text>
+        <text class="t-lb" x="550" y="263">MemorySampler</text>
+        <text class="t-sm" x="910" y="263" text-anchor="end">host_statistics64(HOST_VM_INFO64)</text>
+        <text class="t-lb" x="550" y="290">ProcessSampler</text>
+        <text class="t-sm" x="910" y="290" text-anchor="end">proc_listallpids &#183; proc_pidinfo</text>
+        <text class="t-lb" x="550" y="317">BoundedTopK</text>
+        <text class="t-sm" x="910" y="317" text-anchor="end">5 kept of ~600 &#183; O(n log k)</text>
+        <text class="t-lb" x="550" y="344">JSONEncoder</text>
+        <text class="t-sm" x="910" y="344" text-anchor="end">MetricSnapshot &#8594; Data</text>
+
+        <text class="t-lb" x="724" y="398" text-anchor="end">didProduceSnapshot(payload)</text>
+        <line class="wire accent" x1="730" y1="406" x2="216" y2="406" marker-end="url(#f2b)"/>
+        <text class="t-sm" x="724" y="421" text-anchor="end">one-way &#183; MonitoringClientProtocol &#183; no reply, so the service never waits on the UI</text>
+
+        <rect class="box" x="20" y="444" width="380" height="124" rx="2"/>
+        <text class="t-hd" x="40" y="467">back on the app side</text>
+        <text class="t-lb" x="40" y="494">JSONDecoder</text>
+        <text class="t-sm" x="380" y="494" text-anchor="end">Data &#8594; MetricSnapshot</text>
+        <text class="t-lb" x="40" y="521">provider actor</text>
+        <text class="t-sm" x="380" y="521" text-anchor="end">stores latest &#183; pushesReceived++</text>
+        <text class="t-lb" x="40" y="548">RingBuffer(120)</text>
+        <text class="t-sm" x="380" y="548" text-anchor="end">@MainActor &#183; SwiftUI redraw</text>
+
+        <line class="wire dash" x1="210" y1="588" x2="724" y2="588" marker-end="url(#f2a)"/>
+        <text class="t-sm" x="216" y="580">currentSnapshot(withReply:) &#183; the pull path, used only when a push is late</text>
+      </svg>
+    </div>
+    <figcaption>Two shapes on one connection. The solid downward call is request/reply and returns almost immediately; the accented upward call is fire-and-forget, which is what lets the service keep sampling at a fixed rate no matter how slow the UI is. The dashed pull at the bottom exists only so a missed push degrades into a stale reading rather than a frozen one.</figcaption>
+  </figure>
+
+  <ol class="fm-steps">
+    <li><span class="call">XPCMetricsProvider.connect()</span>Builds the <code>NSXPCConnection</code>, sets <code>remoteObjectInterface</code> and <code>exportedObject</code>, and resumes it. No second process exists yet &mdash; <code>launchd</code> starts one on the first message, not on <code>resume()</code>.</li>
+    <li><span class="call">startMonitoring(interval: 1.0)</span>The first real message, and therefore the thing that actually launches the service. Its <code>withReply</code> block is the only acknowledgement available.</li>
+    <li><span class="call">MetricsCollector &#8212; <em>Task loop starts</em></span>One actor owns all four samplers, so their mutable previous-reading state needs no lock and two samples cannot interleave.</li>
+    <li><span class="call">mach_host_self() &#8594; host_statistics(HOST_CPU_LOAD_INFO)</span>Cumulative ticks since boot, differenced against the previous reading with <code>&amp;-</code> so a counter wrap is a slightly wrong sample rather than a trap.</li>
+    <li><span class="call">host_statistics64(HOST_VM_INFO64)</span>Page counts read through <code>withMemoryRebound</code>, then multiplied by <code>vm_kernel_page_size</code> &mdash; not 4096, which is wrong by 4&#215; on Apple Silicon.</li>
+    <li><span class="call">proc_listallpids &#8594; proc_pidinfo(PROC_PIDTASKINFO)</span>Per-process CPU time and resident size. This is the call App Sandbox would have refused for every process but our own.</li>
+    <li><span class="call">BoundedTopK.insert(_:)</span>~600 processes reduced to 5 in a single pass with a min-heap: O(n log k) time, O(k) space, and a payload whose size does not grow with the process table.</li>
+    <li><span class="call">JSONEncoder().encode(snapshot)</span>The payload crosses as encoded <code>Codable</code> inside <code>Data</code>, so neither side has to maintain an <code>NSSecureCoding</code> class whitelist.</li>
+    <li><span class="call">didProduceSnapshot(_:)</span>One-way across the boundary. The service does not wait for the app, which is what keeps the sample interval honest.</li>
+    <li><span class="call">JSONDecoder &#8594; provider actor</span>Stores <code>latest</code>, bumps <code>pushesReceived</code>. If the newest snapshot is older than <code>max(interval &#215; 2, 1 s)</code>, the provider falls back to the pull path instead of showing a lie.</li>
+    <li><span class="call">RingBuffer(capacity: 120) &#8594; DashboardView</span>Fixed-capacity history on the <code>@MainActor</code> view model, then the chart, the tiles and the <code>NSStatusItem</code> redraw. Memory is flat whether the app has run a minute or a day.</li>
+  </ol>
+
+  <h3>What happens when it breaks</h3>
+  <p class="fm-sub">The recovery path is the reason the split exists, so it is worth being able to draw from memory.</p>
+
+  <figure class="fig">
+    <div class="fig-scroll">
+      <svg viewBox="0 0 950 230" role="img" aria-label="Three states: streaming, interrupted, reconnected. A crash moves streaming to interrupted, where interruptionHandler fires and the connection stays valid; the next message causes launchd to relaunch the service, reaching reconnected; startMonitoring is then re-sent and the stream resumes.">
+        <defs>
+          <marker id="f3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" class="mk"/>
+          </marker>
+        </defs>
+
+        <rect class="box hot" x="20" y="44" width="230" height="76" rx="2"/>
+        <text class="t-hd" x="135" y="72" text-anchor="middle">streaming</text>
+        <text class="t-sm" x="135" y="92" text-anchor="middle">a push every 1.0 s</text>
+        <text class="t-sm" x="135" y="109" text-anchor="middle">pushesReceived++</text>
+
+        <line class="wire" x1="252" y1="82" x2="354" y2="82" marker-end="url(#f3a)"/>
+        <text class="t-sm" x="304" y="68" text-anchor="middle">crash / exit</text>
+        <text class="t-sm" x="304" y="103" text-anchor="middle">conn. survives</text>
+
+        <rect class="box" x="360" y="44" width="230" height="76" rx="2"/>
+        <text class="t-hd" x="475" y="72" text-anchor="middle">interrupted</text>
+        <text class="t-sm" x="475" y="92" text-anchor="middle">interruptionHandler</text>
+        <text class="t-sm" x="475" y="109" text-anchor="middle">reason recorded once</text>
+
+        <line class="wire" x1="592" y1="82" x2="694" y2="82" marker-end="url(#f3a)"/>
+        <text class="t-sm" x="643" y="68" text-anchor="middle">next message</text>
+        <text class="t-sm" x="643" y="103" text-anchor="middle">relaunched</text>
+
+        <rect class="box" x="700" y="44" width="230" height="76" rx="2"/>
+        <text class="t-hd" x="815" y="72" text-anchor="middle">reconnected</text>
+        <text class="t-sm" x="815" y="92" text-anchor="middle">invalidate, then a</text>
+        <text class="t-sm" x="815" y="109" text-anchor="middle">fresh NSXPCConnection</text>
+
+        <path class="wire" d="M815,122 V168 H135 V126" marker-end="url(#f3a)"/>
+        <text class="t-sm" x="475" y="188" text-anchor="middle">startMonitoring(interval:) re-sent &#183; new PID, same UI, no blank window</text>
+      </svg>
+    </div>
+    <figcaption>The distinction that gets asked about: <code>interruptionHandler</code> means the peer process died and the connection object is still usable &mdash; reconnect and carry on. <code>invalidationHandler</code> is terminal: the connection can never be used again, and a new one has to be built. Confusing the two produces an app that either reconnects forever to a dead endpoint or gives up on a recoverable crash.</figcaption>
+  </figure>
+
+  <h3>The other shape on the same connection</h3>
+  <p class="fm-note">Not every job fits request/reply. A full workspace walk takes tens of seconds, so <code>startWorkspaceScan(path:)</code> replies as soon as the job is <em>accepted</em> and everything afterwards arrives on the client interface as <code>ScanUpdate</code> values through <code>didUpdateScan(_:)</code> &mdash; one <code>.started</code>, many <code>.progress</code>, then exactly one <code>.finished</code> or <code>.cancelled</code>. Two consequences worth naming out loud: the reply block means &ldquo;queued&rdquo;, not &ldquo;done&rdquo;; and the client channel has to be captured <em>with the request</em> rather than when the connection is accepted, because a one-shot <code>.started</code> emitted before the channel is attached is dropped in total silence. That was a real bug, and it only showed up on the one-shot message &mdash; a 1 Hz stream hides it completely.</p>
+
+  <div class="fm-say">
+    <h4>the sixty-second version</h4>
+    <p>MacEngine is two processes. The one you see is a SwiftUI app that contains no measurement code at all; the one you don&rsquo;t is an XPC service, started by launchd, that owns every Mach and libproc call. Once a second the service&rsquo;s collector actor samples CPU ticks, VM page counts, disk and per-process task info, reduces roughly six hundred processes to the top five with a bounded min-heap, encodes the result as JSON and pushes it one way across an <code>NSXPCConnection</code>. The app decodes it, appends it to a 120-sample ring buffer and draws. If the service dies, <code>interruptionHandler</code> fires, the app records the reason once and reconnects &mdash; launchd restarts the service on the next message, and the window never blanks, because the last snapshot is still on screen and a pull path covers the gap. The split is the whole point: a fault in the sampling code cannot take down the UI, and the sandbox decision only has to be made for the process that actually needs the access.</p>
+  </div>
+
+</section>
+
 <footer>
   <span>Darwin API Console</span>
-  <span>grounded in MacEngine @ block-b-xpc-service</span>
+  <span>grounded in MacEngine @ block-d-workspace-inspector</span>
   <span>macOS 26.5 &middot; Xcode 26.6 &middot; Swift 6.3</span>
 </footer>
 
