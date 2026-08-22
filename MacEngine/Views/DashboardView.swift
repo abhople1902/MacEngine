@@ -11,6 +11,7 @@ struct DashboardView: View {
     private var cpu: CPUMetrics { model.latest?.cpu ?? .zero }
     private var memory: MemoryMetrics { model.latest?.memory ?? .zero }
     private var disk: DiskMetrics { model.latest?.disk ?? .zero }
+    private var load: SystemLoad { SystemLoad.reading(model.latest) }
 
     var body: some View {
         ScrollView {
@@ -23,28 +24,29 @@ struct DashboardView: View {
                         value: cpu.busyFraction.percentLabel,
                         caption: cpuCaption,
                         fraction: cpu.busyFraction,
-                        tint: .blue
+                        tint: Theme.cpu
                     )
                     MetricTileView(
                         title: "Memory",
                         value: memory.usedBytes.byteLabel,
                         caption: memoryCaption,
                         fraction: memory.usedFraction,
-                        tint: .purple
+                        tint: Theme.memory
                     )
                     MetricTileView(
                         title: "Disk",
                         value: disk.usedFraction.percentLabel,
                         caption: diskCaption,
                         fraction: disk.usedFraction,
-                        tint: .teal
+                        tint: Theme.disk
                     )
                 }
 
                 DashboardSection("CPU History") {
                     CPUHistoryChart(
                         snapshots: model.recentSnapshots,
-                        capacity: model.recentSnapshots.count
+                        capacity: model.recentSnapshots.count,
+                        load: load
                     )
                 }
 
@@ -64,7 +66,7 @@ struct DashboardView: View {
             }
             .padding(18)
         }
-        .background(.background)
+        .scrollContentBackground(.hidden)
         .toolbar { toolbarContent }
         .navigationTitle("MacEngine")
     }
@@ -72,12 +74,20 @@ struct DashboardView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("System Activity")
-                    .font(.system(.title2, weight: .semibold))
-                Text(model.latest.map { "Updated \($0.timestamp.formatted(date: .omitted, time: .standard))" }
-                     ?? "Not sampling")
-                    .font(.metricCaption)
-                    .foregroundStyle(.secondary)
+                Text("SYSTEM ACTIVITY")
+                    .font(.engineTitle)
+                    .foregroundStyle(Theme.ink)
+                    .kerning(1.4)
+                HStack(spacing: 8) {
+                    Text(load.label)
+                        .font(.metricCaption)
+                        .foregroundStyle(load.tint)
+                        .kerning(1)
+                    Text(model.latest.map { "Updated \($0.timestamp.formatted(date: .omitted, time: .standard))" }
+                         ?? "Not sampling")
+                        .font(.metricCaption)
+                        .foregroundStyle(Theme.inkTertiary)
+                }
             }
             Spacer()
             StatusPillView(state: model.connectionState, source: model.source)
@@ -91,12 +101,12 @@ struct DashboardView: View {
                   systemImage: "timer")
             if let detail = model.connectionState.detail {
                 Label(detail, systemImage: "exclamationmark.triangle")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Theme.amber)
             }
             Spacer()
         }
         .font(.diagnosticMono)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(Theme.inkTertiary)
     }
 
     @ToolbarContentBuilder
@@ -155,17 +165,13 @@ struct DashboardSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
                 .textCase(.uppercase)
-                .kerning(0.6)
+                .kerning(1.2)
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.background.secondary, in: .rect(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(.separator, lineWidth: 0.5)
-        }
+        .panel()
     }
 }

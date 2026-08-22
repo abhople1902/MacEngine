@@ -18,6 +18,7 @@ final class StatusItemController {
     )
     private let onToggle: () -> Void
     private let onShowWindow: () -> Void
+    private var themeObserver: NSObjectProtocol?
 
     init(onToggle: @escaping () -> Void, onShowWindow: @escaping () -> Void) {
         self.onToggle = onToggle
@@ -26,11 +27,15 @@ final class StatusItemController {
 
         configureButton()
         configureMenu()
+        observeInterfaceStyle()
     }
 
     deinit {
         MainActor.assumeIsolated {
             NSStatusBar.system.removeStatusItem(statusItem)
+        }
+        if let themeObserver {
+            DistributedNotificationCenter.default().removeObserver(themeObserver)
         }
     }
 
@@ -59,6 +64,27 @@ final class StatusItemController {
         )
         button.imagePosition = .imageLeading
         button.attributedTitle = Self.title(for: nil)
+        applyMenuBarAppearance()
+    }
+
+    /// The window is pinned to dark, and `NSApp.appearance` is what pins it.
+    /// The status item is not ours to restyle, though — it sits in the user's
+    /// menu bar — so it opts back out to whatever the system is set to.
+    private func applyMenuBarAppearance() {
+        let isDark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
+        statusItem.button?.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
+    }
+
+    private func observeInterfaceStyle() {
+        themeObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("AppleInterfaceThemeChangedNotification"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.applyMenuBarAppearance()
+            }
+        }
     }
 
     private func configureMenu() {

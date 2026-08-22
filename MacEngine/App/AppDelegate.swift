@@ -34,6 +34,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.app.info("MacEngine launched, pid \(ProcessInfo.processInfo.processIdentifier)")
 
+        // `.preferredColorScheme` only reaches SwiftUI content. Pinning the
+        // application appearance is what makes the title bar, the toolbar and
+        // the menu bar item match, whatever the Mac is set to.
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        EngineFont.prepare()
+
         statusItemController = StatusItemController(
             onToggle: { [weak self] in self?.dashboard.toggle() },
             onShowWindow: { [weak self] in self?.showMainWindow() }

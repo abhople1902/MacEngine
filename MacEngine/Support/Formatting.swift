@@ -2,8 +2,9 @@
 //  Formatting.swift
 //  MacEngine
 //
-//  Display helpers. Everything uses the system font stack — SF Pro for text and
-//  SF Mono for figures — so there is nothing to bundle and nothing to license.
+//  Display helpers. Chrome and headline figures are set in Audiowide, which is
+//  bundled with the app; dense tabular columns stay in SF Mono, because a
+//  display face with no true tabular figures makes a column of numbers ripple.
 //
 
 import Foundation
@@ -36,11 +37,13 @@ nonisolated extension TimeInterval {
 }
 
 extension Font {
-    /// Figures that change every tick, sized so they do not jitter.
+    /// Figures that change every tick.
     static func metricFigure(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .medium, design: .rounded).monospacedDigit()
+        EngineFont.display(size)
     }
 
-    static let metricCaption = Font.system(.caption, design: .default)
-    static let diagnosticMono = Font.system(.caption, design: .monospaced)
+    static let engineTitle = EngineFont.display(19)
+    static let engineBody = EngineFont.display(12)
+    static let metricCaption = EngineFont.display(10)
+    static let diagnosticMono = Font.system(size: 11, design: .monospaced)
 }

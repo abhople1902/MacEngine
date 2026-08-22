@@ -11,10 +11,10 @@ struct StatusPillView: View {
 
     private var tint: Color {
         switch state {
-        case .streaming: .green
-        case .connecting, .recovering: .orange
-        case .failed: .red
-        case .idle: .secondary
+        case .streaming: Theme.green
+        case .connecting, .recovering: Theme.amber
+        case .failed: Theme.ember
+        case .idle: Theme.inkTertiary
         }
     }
 
@@ -24,20 +24,24 @@ struct StatusPillView: View {
                 Circle()
                     .fill(tint)
                     .frame(width: 7, height: 7)
+                    .shadow(color: tint.opacity(0.8), radius: 4)
                 Text(state.label)
-                    .font(.system(.callout, weight: .medium))
+                    .font(.engineBody)
+                    .foregroundStyle(Theme.ink)
             }
 
-            Divider().frame(height: 12)
+            Rectangle()
+                .fill(Theme.hairline)
+                .frame(width: 1, height: 12)
 
             Text(source.displayName)
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(.background.secondary, in: .capsule)
-        .overlay { Capsule().strokeBorder(.separator, lineWidth: 0.5) }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(Theme.surface.opacity(0.72), in: .capsule)
+        .overlay { Capsule().strokeBorder(Theme.hairline, lineWidth: 1) }
         .help(state.detail ?? source.displayName)
     }
 }

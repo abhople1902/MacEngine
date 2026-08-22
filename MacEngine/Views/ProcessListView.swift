@@ -20,6 +20,7 @@ struct ProcessListView: View {
                 Text("Process enumeration runs inside the monitoring service.")
                     .font(.metricCaption)
             }
+            .foregroundStyle(Theme.inkSecondary)
             .frame(height: 130)
         } else {
             Table(processes) {
@@ -32,6 +33,8 @@ struct ProcessListView: View {
                     .width(90)
             }
             .frame(height: 180)
+            .scrollContentBackground(.hidden)
+            .background(Theme.sunk, in: .rect(cornerRadius: 8))
         }
     }
 }

@@ -37,7 +37,7 @@ struct WorkspaceInspectorView: View {
             }
             .padding(18)
         }
-        .background(.background)
+        .scrollContentBackground(.hidden)
         .navigationTitle("Workspace")
     }
 
@@ -47,10 +47,11 @@ struct WorkspaceInspectorView: View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(model.workspaceName ?? "No project chosen")
-                    .font(.system(.title2, weight: .semibold))
+                    .font(.engineTitle)
+                    .foregroundStyle(Theme.ink)
                 Text(subtitle)
                     .font(.metricCaption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Theme.inkTertiary)
             }
             Spacer()
             if model.state.isScanning {
@@ -95,10 +96,10 @@ struct WorkspaceInspectorView: View {
 
     private func failure(_ reason: String) -> some View {
         Label(reason, systemImage: "exclamationmark.triangle")
-            .foregroundStyle(.orange)
+            .foregroundStyle(Theme.amber)
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.background.secondary, in: .rect(cornerRadius: 10))
+            .panel(cornerRadius: 10)
     }
 
     // MARK: - Results
@@ -110,21 +111,21 @@ struct WorkspaceInspectorView: View {
                 value: scan.totalBytes.byteLabel,
                 caption: "across \(scan.sections.count) locations",
                 fraction: 1,
-                tint: .indigo
+                tint: Theme.memory
             )
             MetricTileView(
                 title: "Reclaimable",
                 value: scan.reclaimableBytes.byteLabel,
                 caption: "caches and build output",
                 fraction: scan.totalBytes > 0 ? Double(scan.reclaimableBytes) / Double(scan.totalBytes) : 0,
-                tint: .orange
+                tint: Theme.amber
             )
             MetricTileView(
                 title: "Toolchain",
                 value: scan.toolchain.totalBytes.byteLabel,
                 caption: "\(scan.toolchain.processCount) live processes",
                 fraction: 0,
-                tint: .teal
+                tint: Theme.disk
             )
         }
     }
@@ -163,16 +164,17 @@ private struct SectionRow: View {
                 HStack(spacing: 10) {
                     Image(systemName: hasChildren ? "chevron.right" : "circle.fill")
                         .font(.system(size: hasChildren ? 10 : 4, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.inkSecondary)
                         .rotationEffect(.degrees(isExpanded && hasChildren ? 90 : 0))
                         .frame(width: 12)
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(section.node.name)
-                            .font(.system(.body, weight: .medium))
+                            .font(.engineBody)
+                            .foregroundStyle(Theme.ink)
                         Text(section.isAbsent ? "Not present on this Mac" : section.note)
                             .font(.metricCaption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.inkTertiary)
                             .lineLimit(2)
                     }
 
@@ -181,7 +183,7 @@ private struct SectionRow: View {
                     if section.isReclaimable && section.node.byteCount > 0 {
                         Text("reclaimable")
                             .font(.metricCaption)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(Theme.amber)
                     }
 
                     Text(section.node.byteCount.byteLabel)
@@ -208,7 +210,7 @@ private struct SectionRow: View {
                             Spacer(minLength: 8)
                             Text("\(child.fileCount) files")
                                 .font(.metricCaption)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Theme.inkTertiary)
                             Text(child.byteCount.byteLabel)
                                 .font(.diagnosticMono)
                                 .frame(width: 70, alignment: .trailing)
@@ -218,7 +220,7 @@ private struct SectionRow: View {
                         HStack {
                             Text("+ \(section.node.children.count - 8) more")
                                 .font(.metricCaption)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Theme.inkTertiary)
                             Spacer()
                         }
                     }
@@ -238,9 +240,9 @@ private struct ProportionBar: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .leading) {
-                Capsule().fill(.quaternary)
+                Capsule().fill(Theme.sunk)
                 Capsule()
-                    .fill(isReclaimable ? Color.orange.gradient : Color.indigo.gradient)
+                    .fill(isReclaimable ? Theme.amber.gradient : Theme.memory.gradient)
                     .frame(width: max(geometry.size.width * fraction, fraction > 0 ? 3 : 0))
             }
         }
@@ -256,7 +258,7 @@ private struct ToolchainView: View {
         if footprint.groups.isEmpty {
             Text("No toolchain processes running. Open Xcode and scan again.")
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 8)
         } else {
@@ -264,17 +266,18 @@ private struct ToolchainView: View {
                 ForEach(footprint.groups) { group in
                     HStack(spacing: 10) {
                         Text(group.name)
-                            .font(.system(.body, weight: .medium))
+                            .font(.engineBody)
+                            .foregroundStyle(Theme.ink)
                             .lineLimit(1)
                         if group.processCount > 1 {
                             Text("×\(group.processCount)")
                                 .font(.diagnosticMono)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.inkSecondary)
                         }
                         Spacer(minLength: 12)
                         Text(group.cpuFraction.precisePercentLabel)
                             .font(.diagnosticMono)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Theme.inkSecondary)
                             .frame(width: 58, alignment: .trailing)
                         Text(group.memoryBytes.byteLabel)
                             .font(.metricFigure(14))

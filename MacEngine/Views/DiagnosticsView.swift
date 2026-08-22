@@ -40,12 +40,12 @@ struct DiagnosticsView: View {
                         model.simulateServiceCrash()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(.red)
+                    .tint(Theme.ember)
                     .disabled(!model.connectionState.isStreaming)
 
                     Text("Terminates the service process")
                         .font(.metricCaption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Theme.inkTertiary)
                 }
             }
         }
@@ -54,13 +54,14 @@ struct DiagnosticsView: View {
     private func indicator(_ title: String, value: String, isHealthy: Bool) -> some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(isHealthy ? Color.green : Color.secondary)
+                .fill(isHealthy ? Theme.green : Theme.inkTertiary)
                 .frame(width: 7, height: 7)
             Text(title)
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
             Text(value)
                 .font(.diagnosticMono)
+                .foregroundStyle(Theme.ink)
         }
     }
 }

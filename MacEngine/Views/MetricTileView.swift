@@ -17,29 +17,28 @@ struct MetricTileView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkSecondary)
                 .textCase(.uppercase)
-                .kerning(0.6)
+                .kerning(1.2)
 
             Text(value)
-                .font(.metricFigure(30))
+                .font(.metricFigure(26))
+                .foregroundStyle(Theme.ink)
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.25), value: value)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
 
             MetricBar(fraction: fraction, tint: tint)
 
             Text(caption)
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkTertiary)
                 .lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.background.secondary, in: .rect(cornerRadius: 12))
-        .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(.separator, lineWidth: 0.5)
-        }
+        .panel()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value). \(caption)")
     }
@@ -53,10 +52,11 @@ private struct MetricBar: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(.quaternary)
+                    .fill(Theme.sunk)
                 Capsule()
                     .fill(tint.gradient)
                     .frame(width: max(proxy.size.width * fraction.clampedToUnitInterval, 2))
+                    .shadow(color: tint.opacity(0.55), radius: 4)
             }
         }
         .frame(height: 6)
@@ -71,16 +71,17 @@ private struct MetricBar: View {
             value: "32%",
             caption: "10 cores · 18% user · 14% system",
             fraction: 0.32,
-            tint: .blue
+            tint: Theme.cpu
         )
         MetricTileView(
             title: "Memory",
             value: "8.4 GB",
             caption: "of 16 GB · normal pressure",
             fraction: 0.52,
-            tint: .purple
+            tint: Theme.memory
         )
     }
     .padding()
     .frame(width: 520)
+    .background(LoadWash(load: .nominal))
 }

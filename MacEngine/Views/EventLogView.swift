@@ -14,7 +14,7 @@ struct EventLogView: View {
         if records.isEmpty {
             Text("No lifecycle events yet.")
                 .font(.metricCaption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Theme.inkTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 6)
         } else {
@@ -25,16 +25,16 @@ struct EventLogView: View {
                             .foregroundStyle(record.event.tint)
                             .frame(width: 16)
                         Text(record.event.displayName)
-                            .font(.system(.caption))
+                            .font(.metricCaption)
                         if let detail = record.detail {
                             Text(detail)
                                 .font(.diagnosticMono)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Theme.inkSecondary)
                         }
                         Spacer()
                         Text(record.timestamp, format: .dateTime.hour().minute().second())
                             .font(.diagnosticMono)
-                            .foregroundStyle(.tertiary)
+                            .foregroundStyle(Theme.inkTertiary)
                     }
                     .padding(.vertical, 5)
                     if record.id != records.prefix(6).last?.id {
@@ -59,10 +59,10 @@ extension MonitoringEvent {
 
     var tint: Color {
         switch self {
-        case .monitoringStarted, .serviceRecovered: .green
-        case .monitoringStopped: .secondary
-        case .serviceUnavailable: .red
-        case .highCPUDetected: .orange
+        case .monitoringStarted, .serviceRecovered: Theme.green
+        case .monitoringStopped: Theme.inkTertiary
+        case .serviceUnavailable: Theme.ember
+        case .highCPUDetected: Theme.amber
         }
     }
 }
