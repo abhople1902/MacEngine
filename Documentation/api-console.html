@@ -685,13 +685,15 @@
     max-width: 86ch;
   }
 
+  /* Hanging indent rather than a grid: the description after .call is a bare
+     text node, and in a grid container that becomes its own item — which put
+     the whole sentence in the 24px counter column, one word per line. */
   .fm-steps li {
-    display: grid;
-    grid-template-columns: 24px 1fr;
-    gap: 4px 12px;
-    padding: 11px 0;
+    position: relative;
+    padding: 12px 0 12px 30px;
     border-top: 1px dashed var(--rule);
     font-size: 14px;
+    line-height: 1.65;
     color: var(--ink-2);
   }
 
@@ -701,6 +703,9 @@
   .fm-steps li::before {
     counter-increment: fmstep;
     content: counter(fmstep) ".";
+    position: absolute;
+    left: 0;
+    top: 16px;
     font-family: var(--mono);
     font-size: 11px;
     color: var(--ink-3);
@@ -710,9 +715,10 @@
   .fm-steps .call {
     font-family: var(--mono);
     font-size: 13px;
+    line-height: 1.45;
     color: var(--ink);
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 5px;
     overflow-wrap: anywhere;
   }
 
