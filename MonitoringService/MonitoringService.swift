@@ -60,6 +60,17 @@ final class MonitoringService: NSObject, MonitoringServiceProtocol {
         }
     }
 
+    /// Walks this process's own VM regions. Cheap enough to answer inline —
+    /// a few hundred `mach_vm_region_recurse` calls — but it is still work the
+    /// app cannot do on the service's behalf, which is the reason it is here.
+    func addressSpaceMap(withReply reply: @escaping (Data?, String?) -> Void) {
+        do {
+            reply(try JSONEncoder().encode(AddressSpaceSampler().sample()), nil)
+        } catch {
+            reply(nil, error.localizedDescription)
+        }
+    }
+
     func startWorkspaceScan(path: String, withReply reply: @escaping (Bool) -> Void) {
         Task { [scanner, channel] in
             await scanner.start(path: path, channel: channel)

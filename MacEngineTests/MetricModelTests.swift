@@ -48,11 +48,25 @@ final class MetricModelTests: XCTestCase {
         XCTAssertEqual(memory.usedFraction, 0.5625, accuracy: 0.0001)
     }
 
-    func testMemoryPressureCrossesIntoWarningAtSeventyPercent() {
-        XCTAssertEqual(memory(usedFraction: 0.69).pressure, .normal)
-        XCTAssertEqual(memory(usedFraction: 0.70).pressure, .warning)
-        XCTAssertEqual(memory(usedFraction: 0.89).pressure, .warning)
-        XCTAssertEqual(memory(usedFraction: 0.90).pressure, .critical)
+    func testUtilisationBandCrossesIntoWarningAtSeventyPercent() {
+        XCTAssertEqual(memory(usedFraction: 0.69).utilisationBand, .normal)
+        XCTAssertEqual(memory(usedFraction: 0.70).utilisationBand, .warning)
+        XCTAssertEqual(memory(usedFraction: 0.89).utilisationBand, .warning)
+        XCTAssertEqual(memory(usedFraction: 0.90).utilisationBand, .critical)
+    }
+
+    /// Utilisation is not pressure. A machine can be nearly full and still be
+    /// fine, which is exactly what the kernel level is for.
+    func testKernelPressureIsIndependentOfUtilisation() {
+        XCTAssertEqual(memory(usedFraction: 0.95).utilisationBand, .critical)
+        XCTAssertEqual(memory(usedFraction: 0.95).pressure, .normal)
+    }
+
+    func testPressureLevelBitmaskMapsToTheThreeKernelStates() {
+        XCTAssertEqual(MemoryPressure(pressureLevel: 1), .normal)
+        XCTAssertEqual(MemoryPressure(pressureLevel: 2), .warning)
+        XCTAssertEqual(MemoryPressure(pressureLevel: 4), .critical)
+        XCTAssertEqual(MemoryPressure(pressureLevel: 0), .normal)
     }
 
     func testUsedFractionIsZeroWhenTotalIsUnknown() {

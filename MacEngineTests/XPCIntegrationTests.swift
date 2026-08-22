@@ -124,6 +124,42 @@ final class XPCIntegrationTests: XCTestCase {
         await fulfillment(of: [cancelled], timeout: 15)
     }
 
+    /// The map has to come from the service's own walk. If this ever returned
+    /// the app's pid it would mean the app had found a way to read another
+    /// task's regions, which is exactly what the design says it cannot do.
+    func testTheServiceMapsItsOwnAddressSpaceRatherThanTheApps() async throws {
+        let provider = XPCMetricsProvider()
+        await provider.start(interval: interval)
+        defer { Task { await provider.stop() } }
+
+        let map = try await provider.addressSpaceMap()
+
+        XCTAssertNotEqual(map.processIdentifier, ProcessInfo.processInfo.processIdentifier)
+        XCTAssertGreaterThan(map.regionCount, 0)
+        XCTAssertGreaterThan(map.virtualBytes, map.residentBytes)
+        XCTAssertFalse(map.wasTruncated, "A healthy process should not hit the region cap")
+    }
+
+    /// Each leg is stamped by whichever process performed it, so a populated
+    /// decode stamp is proof the snapshot really came from somewhere else.
+    func testSnapshotsCarryTimingStampedOnBothSidesOfTheBoundary() async throws {
+        let provider = XPCMetricsProvider()
+        await provider.start(interval: interval)
+        defer { Task { await provider.stop() } }
+
+        var timing: PipelineTiming?
+        try await waitUntil("a snapshot carrying decode stamps") {
+            timing = (try? await provider.snapshot())?.timing
+            return timing?.decodeEnded != nil
+        }
+
+        let stamped = try XCTUnwrap(timing)
+        // `presented` belongs to the view model, so the provider sees three.
+        XCTAssertEqual(stamped.stages.map(\.name), ["collect", "encode + transit", "decode"])
+        XCTAssertTrue(stamped.stages.allSatisfy { $0.seconds >= 0 })
+        XCTAssertGreaterThan(stamped.collectEnded.timeIntervalSince(stamped.collectStarted), 0)
+    }
+
     func testServiceRecoversAfterACrash() async throws {
         let provider = XPCMetricsProvider()
         await provider.start(interval: interval)

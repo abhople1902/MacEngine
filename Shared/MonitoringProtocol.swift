@@ -34,6 +34,12 @@ nonisolated enum MonitoringIdentifiers {
     /// Returns one JSON-encoded `ServiceInfo` describing service health.
     func serviceInfo(withReply reply: @escaping (Data?, String?) -> Void)
 
+    /// Returns one JSON-encoded `AddressSpaceMap` of the *service's own* task.
+    /// The service has to map itself because the app cannot: reading another
+    /// process's VM regions needs `task_for_pid`, which needs privileges this
+    /// project does not take.
+    func addressSpaceMap(withReply reply: @escaping (Data?, String?) -> Void)
+
     /// Debug-only: terminates the service so the app's recovery path can be
     /// exercised from the Diagnostics screen.
     func simulateCrash()

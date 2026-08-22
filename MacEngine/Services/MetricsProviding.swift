@@ -55,6 +55,23 @@ nonisolated protocol CrashSimulating {
     func simulateCrash() async
 }
 
+/// Implemented by providers backed by a separate process, so Engineer Mode can
+/// name that process and show how the connection to it is behaving. The local
+/// provider deliberately does not conform — it has no peer to describe.
+nonisolated protocol ServiceIntrospectable {
+    /// Health and identity of the backing process, asked for directly rather
+    /// than inferred, so a recovered service is distinguishable from one that
+    /// never died.
+    func serviceInfo() async throws -> ServiceInfo
+
+    /// Snapshots that arrived unsolicited. Non-zero is the only direct evidence
+    /// the reverse half of the connection is live.
+    var pushesReceived: Int { get async }
+
+    /// The backing process's own address space, walked by that process.
+    func addressSpaceMap() async throws -> AddressSpaceMap
+}
+
 /// Implemented by providers that can measure a workspace's cost on disk. Kept
 /// separate from `MetricsProviding` because a scan is a different shape of work
 /// — one long job with progress, not a repeating reading.

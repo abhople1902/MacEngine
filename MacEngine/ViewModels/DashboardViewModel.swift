@@ -53,6 +53,17 @@ final class DashboardViewModel {
     private(set) var events: [MonitoringEventRecord] = []
     private(set) var samplesTaken = 0
 
+    /// What the monitoring process says about itself. Only Engineer Mode asks
+    /// for it, and it asks on its own cadence — a topology panel nobody is
+    /// looking at should not cost an XPC round-trip every tick.
+    private(set) var serviceInfo: ServiceInfo?
+    private(set) var pushesReceived = 0
+
+    /// One map per process. The app walks its own task directly; the service is
+    /// asked to walk its own, because nothing else can.
+    private(set) var appAddressSpace: AddressSpaceMap?
+    private(set) var serviceAddressSpace: AddressSpaceMap?
+
     var sampleInterval: TimeInterval = 1.0
 
     private var history = RingBuffer<MetricSnapshot>(capacity: DashboardViewModel.historyCapacity)
@@ -65,6 +76,9 @@ final class DashboardViewModel {
 
     /// Only an out-of-process provider has a process that can be killed.
     var canSimulateCrash: Bool { provider is any CrashSimulating }
+
+    /// Only an out-of-process provider has a peer worth describing.
+    var canIntrospectService: Bool { provider is any ServiceIntrospectable }
 
     /// Snapshots oldest to newest, for the history chart.
     var recentSnapshots: [MetricSnapshot] { history.elements }
@@ -92,6 +106,8 @@ final class DashboardViewModel {
         pollingTask = nil
         consecutiveHighCPUSamples = 0
         connectionState = .idle
+        serviceInfo = nil
+        serviceAddressSpace = nil
 
         Task { [provider] in
             await provider.stop()
@@ -110,6 +126,33 @@ final class DashboardViewModel {
         guard let provider = provider as? any CrashSimulating else { return }
         Log.xpc.notice("Diagnostics requested a monitoring service crash")
         Task { await provider.simulateCrash() }
+    }
+
+    /// Refreshed by the topology panel while it is on screen. A failure here is
+    /// not an error state for the app — it means the service is down, which the
+    /// panel shows by clearing the peer rather than by throwing.
+    func refreshServiceInfo() async {
+        guard let provider = provider as? any ServiceIntrospectable else { return }
+
+        pushesReceived = await provider.pushesReceived
+        do {
+            serviceInfo = try await provider.serviceInfo()
+        } catch {
+            serviceInfo = nil
+        }
+    }
+
+    /// Structural rather than streaming — the panel that shows this refreshes
+    /// on its own slow cadence, not on the sampling loop.
+    func refreshAddressSpaces() async {
+        appAddressSpace = AddressSpaceSampler().sample()
+
+        guard let provider = provider as? any ServiceIntrospectable else { return }
+        do {
+            serviceAddressSpace = try await provider.addressSpaceMap()
+        } catch {
+            serviceAddressSpace = nil
+        }
     }
 
     func clearHistory() {
@@ -140,6 +183,9 @@ final class DashboardViewModel {
     }
 
     private func apply(_ snapshot: MetricSnapshot) {
+        var snapshot = snapshot
+        snapshot.timing?.presented = Date()
+
         if connectionState != .streaming {
             let wasDown = connectionState.detail != nil
             connectionState = .streaming

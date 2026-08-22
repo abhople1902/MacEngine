@@ -8,6 +8,11 @@ import SwiftUI
 struct DashboardView: View {
     @Bindable var model: DashboardViewModel
 
+    /// Engineer Mode is one stored boolean. Each section reads it and renders
+    /// either the summary or the mechanism — there is deliberately no second
+    /// view hierarchy to keep in step.
+    @AppStorage("engineerMode") private var engineerMode = false
+
     private var cpu: CPUMetrics { model.latest?.cpu ?? .zero }
     private var memory: MemoryMetrics { model.latest?.memory ?? .zero }
     private var disk: DiskMetrics { model.latest?.disk ?? .zero }
@@ -40,6 +45,30 @@ struct DashboardView: View {
                         fraction: disk.usedFraction,
                         tint: Theme.disk
                     )
+                }
+
+                if engineerMode && model.canIntrospectService {
+                    DashboardSection("Process Topology") {
+                        ProcessTopologyView(model: model)
+                    }
+                }
+
+                if engineerMode {
+                    DashboardSection("Address Space") {
+                        AddressSpaceView(model: model)
+                    }
+                }
+
+                if engineerMode {
+                    DashboardSection("Sampling Pipeline") {
+                        PipelineView(timing: model.latest?.timing)
+                    }
+                }
+
+                if engineerMode {
+                    DashboardSection("Virtual Memory") {
+                        VMCompositionView(memory: memory)
+                    }
                 }
 
                 DashboardSection("CPU History") {
@@ -112,6 +141,14 @@ struct DashboardView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
+            Toggle(isOn: $engineerMode) {
+                Label("Engineer Mode", systemImage: "cpu")
+            }
+            .toggleStyle(.button)
+            .help("Show the mechanism instead of the summary")
+        }
+
+        ToolbarItem(placement: .primaryAction) {
             Picker("Interval", selection: $model.sampleInterval) {
                 Text("0.5s").tag(0.5)
                 Text("1s").tag(1.0)
@@ -142,7 +179,8 @@ struct DashboardView: View {
 
     private var memoryCaption: String {
         guard model.latest != nil else { return "Waiting for a sample" }
-        return "of \(memory.totalBytes.byteLabel) · \(memory.pressure.rawValue) pressure"
+        let swap = memory.swap.isActive ? " · swap \(memory.swap.usedBytes.byteLabel)" : ""
+        return "of \(memory.totalBytes.byteLabel) · \(memory.pressure.rawValue)\(swap)"
     }
 
     private var diskCaption: String {

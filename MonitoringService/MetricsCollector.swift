@@ -111,12 +111,25 @@ actor MetricsCollector {
     /// client that only ever polls still gets real data.
     func snapshot(now: Date = Date()) -> MetricSnapshot {
         samplesTaken += 1
+
+        let collectStarted = Date()
+        let cpu = cpuSampler.sample()
+        let memory = memorySampler.sample()
+        let disk = diskSampler.sample(now: now)
+        let processes = topProcesses(now: now)
+
         return MetricSnapshot(
             timestamp: now,
-            cpu: cpuSampler.sample(),
-            memory: memorySampler.sample(),
-            disk: diskSampler.sample(now: now),
-            topProcesses: topProcesses(now: now)
+            cpu: cpu,
+            memory: memory,
+            disk: disk,
+            topProcesses: processes,
+            timing: PipelineTiming(
+                collectStarted: collectStarted,
+                collectEnded: Date(),
+                // Overwritten the instant before encoding actually starts.
+                encodeStarted: Date()
+            )
         )
     }
 
@@ -137,7 +150,9 @@ actor MetricsCollector {
         while !Task.isCancelled, isMonitoring {
             if let channel {
                 do {
-                    channel.send(try encoder.encode(snapshot()))
+                    var snapshot = snapshot()
+                    snapshot.timing?.encodeStarted = Date()
+                    channel.send(try encoder.encode(snapshot))
                 } catch {
                     Log.xpc.error("Snapshot encode failed: \(error.localizedDescription, privacy: .public)")
                 }

@@ -24,8 +24,10 @@ enum SystemLoad: Equatable {
     case elevated
     case pressured
 
-    /// CPU is the fast signal and memory pressure the slow one; the worse of the
-    /// two wins so a wedged compiler and a full memory bank both show up.
+    /// Three signals, worst one wins: CPU is the fast one, memory utilisation
+    /// the slow one, and the kernel's own pressure level overrides both — a
+    /// machine the kernel calls stressed is stressed whatever the percentages
+    /// say.
     static func reading(_ snapshot: MetricSnapshot?) -> SystemLoad {
         guard let snapshot else { return .nominal }
 
@@ -35,13 +37,18 @@ enum SystemLoad: Equatable {
         default: .pressured
         }
 
-        let fromMemory: SystemLoad = switch snapshot.memory.pressure {
-        case .normal: .nominal
-        case .warning: .elevated
-        case .critical: .pressured
-        }
+        return [fromCPU,
+                SystemLoad(snapshot.memory.utilisationBand),
+                SystemLoad(snapshot.memory.pressure)]
+            .reduce(.nominal, max)
+    }
 
-        return max(fromCPU, fromMemory)
+    private init(_ band: MemoryPressure) {
+        switch band {
+        case .normal: self = .nominal
+        case .warning: self = .elevated
+        case .critical: self = .pressured
+        }
     }
 
     private var severity: Int {

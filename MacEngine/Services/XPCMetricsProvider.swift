@@ -19,7 +19,7 @@
 import OSLog
 import Foundation
 
-actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning {
+actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, ServiceIntrospectable {
     nonisolated let source = MetricsSource.xpcService
 
     private var connection: NSXPCConnection?
@@ -121,6 +121,36 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning {
 
         do {
             return try JSONDecoder().decode(ServiceInfo.self, from: payload)
+        } catch {
+            throw MetricsProviderError.decodingFailed(error.localizedDescription)
+        }
+    }
+
+    /// The service's own address space. Asking it to map itself is the only
+    /// unprivileged way to get this — see `MonitoringServiceProtocol`.
+    func addressSpaceMap() async throws -> AddressSpaceMap {
+        let connection = activeConnection()
+
+        let payload: Data = try await withCheckedThrowingContinuation { continuation in
+            let box = OneShot(continuation)
+            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
+                box.resume(throwing: MetricsProviderError.unavailable(error.localizedDescription))
+            } as? MonitoringServiceProtocol
+
+            guard let proxy else {
+                return box.resume(throwing: MetricsProviderError.unavailable("Service refused the connection"))
+            }
+            proxy.addressSpaceMap { data, failure in
+                if let data {
+                    box.resume(returning: data)
+                } else {
+                    box.resume(throwing: MetricsProviderError.unavailable(failure ?? "Service returned no map"))
+                }
+            }
+        }
+
+        do {
+            return try JSONDecoder().decode(AddressSpaceMap.self, from: payload)
         } catch {
             throw MetricsProviderError.decodingFailed(error.localizedDescription)
         }
@@ -286,8 +316,12 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning {
     }
 
     private func decode(_ payload: Data) throws -> MetricSnapshot {
+        let started = Date()
         do {
-            return try JSONDecoder().decode(MetricSnapshot.self, from: payload)
+            var snapshot = try JSONDecoder().decode(MetricSnapshot.self, from: payload)
+            snapshot.timing?.decodeStarted = started
+            snapshot.timing?.decodeEnded = Date()
+            return snapshot
         } catch {
             throw MetricsProviderError.decodingFailed(error.localizedDescription)
         }

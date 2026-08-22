@@ -4,6 +4,8 @@
 //
 //  Reads the Mach VM statistics and folds them into the same three buckets
 //  Activity Monitor reports: app memory, wired memory and compressed memory.
+//  Engineer Mode wants the states underneath that summary, so the full page
+//  composition, swap usage and the kernel's pressure level come back too.
 //
 
 import OSLog
@@ -32,7 +34,13 @@ nonisolated final class MemorySampler {
             appBytes: appPages * pageSize,
             wiredBytes: UInt64(stats.wire_count) * pageSize,
             compressedBytes: UInt64(stats.compressor_page_count) * pageSize,
-            freeBytes: UInt64(stats.free_count) * pageSize
+            freeBytes: UInt64(stats.free_count) * pageSize,
+            activeBytes: UInt64(stats.active_count) * pageSize,
+            inactiveBytes: UInt64(stats.inactive_count) * pageSize,
+            speculativeBytes: UInt64(stats.speculative_count) * pageSize,
+            fileBackedBytes: UInt64(stats.external_page_count) * pageSize,
+            swap: Self.swapUsage(),
+            pressure: Self.pressureLevel()
         )
     }
 
@@ -52,5 +60,41 @@ nonisolated final class MemorySampler {
             }
         }
         return result == KERN_SUCCESS ? stats : nil
+    }
+
+    /// `vm.swapusage` hands back an `xsw_usage` by value.
+    private static func swapUsage() -> SwapUsage {
+        var usage = xsw_usage()
+        var size = MemoryLayout<xsw_usage>.size
+        guard sysctlbyname("vm.swapusage", &usage, &size, nil, 0) == 0 else {
+            Log.metrics.error("sysctl vm.swapusage failed")
+            return .zero
+        }
+        return SwapUsage(totalBytes: usage.xsu_total, usedBytes: usage.xsu_used)
+    }
+
+    /// The kernel's verdict, which is a different question from "how full is
+    /// the machine". `kern.memorystatus_vm_pressure_level` is a bitmask:
+    /// 1 normal, 2 warning, 4 critical.
+    private static func pressureLevel() -> MemoryPressure {
+        var level: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        guard sysctlbyname("kern.memorystatus_vm_pressure_level", &level, &size, nil, 0) == 0 else {
+            Log.metrics.error("sysctl kern.memorystatus_vm_pressure_level failed")
+            return .normal
+        }
+        return MemoryPressure(pressureLevel: level)
+    }
+}
+
+nonisolated extension MemoryPressure {
+    /// Anything the kernel has not told us about is reported as normal rather
+    /// than guessed at — a wrong alarm is worse than no alarm.
+    init(pressureLevel: Int32) {
+        switch pressureLevel {
+        case 4: self = .critical
+        case 2: self = .warning
+        default: self = .normal
+        }
     }
 }
