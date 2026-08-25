@@ -113,7 +113,7 @@ actor WorkspaceScanner {
             duration: Date().timeIntervalSince(startedAt)
         )
 
-        Log.metrics.info("Workspace scan finished in \(scan.duration, format: .fixed(precision: 1))s")
+        Log.metrics.info("Workspace scan finished in \(scan.duration, format: .fixed(precision: 3))s")
         emit(.finished(scan))
         running = nil
     }

@@ -23,3 +23,6 @@ DerivedData/
 
 # Instruments
 *.trace
+
+# Coverage artifacts left behind by instrumented runs
+*.profraw

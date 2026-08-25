@@ -45,6 +45,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onShowWindow: { [weak self] in self?.showMainWindow() }
         )
         observeLatestSnapshot()
+        startScanIfRequested()
+    }
+
+    /// `-scanPath <project>` runs a workspace scan straight after launch.
+    ///
+    /// This exists for profiling, not for users. A before/after number is only
+    /// worth publishing if both runs did identical work, and the open panel
+    /// cannot be driven from a trace script. `UserDefaults` reads the argument
+    /// domain for free, so no argument parsing is needed and nothing persists.
+    private func startScanIfRequested() {
+        guard let path = UserDefaults.standard.string(forKey: "scanPath") else { return }
+        Log.app.info("Launch argument requested a scan of \(path, privacy: .public)")
+        inspector.start(path: path)
     }
 
     func applicationWillTerminate(_ notification: Notification) {

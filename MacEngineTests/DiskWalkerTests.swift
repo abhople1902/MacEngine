@@ -94,6 +94,19 @@ final class DiskWalkerTests: XCTestCase {
         XCTAssertEqual(serial.children.map(\.name), parallel.children.map(\.name))
     }
 
+    /// Regression: `scan` hands every top-level child to `measure`, and the old
+    /// implementation opened a *directory* enumerator on each one — which
+    /// yields nothing at all for a plain file. Every file sitting directly in a
+    /// scanned folder was silently counted as zero. On this Mac that was 933
+    /// files and 546 MB, most of it the top level of ModuleCache.noindex.
+    func testFilesDirectlyInTheRootAreCounted() async throws {
+        try makeFile("loose.bin", bytes: 30_000)
+        try makeFile("nested/deep.bin", bytes: 30_000)
+
+        let node = await DiskWalker.scan(root)
+        XCTAssertEqual(node.fileCount, 2)
+    }
+
     func testScanOfAMissingRootIsAnEmptyNode() async {
         let node = await DiskWalker.scan(root.appending(path: "nope"))
         XCTAssertEqual(node.byteCount, 0)
