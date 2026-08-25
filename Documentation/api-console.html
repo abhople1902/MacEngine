@@ -1039,7 +1039,7 @@
 
 <footer>
   <span>Darwin API Console</span>
-  <span>grounded in MacEngine @ block-d-workspace-inspector</span>
+  <span>grounded in MacEngine @ master — blocks A through G</span>
   <span>macOS 26.5 &middot; Xcode 26.6 &middot; Swift 6.3</span>
 </footer>
 
@@ -1057,6 +1057,7 @@
 
   var CATEGORIES = {
     mach: "mach",
+    bsd: "bsd",
     proc: "proc",
     xpc: "xpc",
     ipc: "ipc",
@@ -1124,10 +1125,10 @@
     },
     {
       name: "mach_vm_region_recurse",
-      cat: "mach", status: "planned",
+      cat: "mach", status: "built",
       what: "Walks a task's virtual address space region by region — heap, stack, __TEXT, mapped files, shared regions.",
-      usage: "Planned for Engineer Mode's address-space map. The critical constraint: you can read your own task's regions freely, but another process's requires task_for_pid, which needs root or a debugger entitlement. So the panel shows deep region maps for MacEngine's own two processes and footprint-level numbers for everyone else.",
-      ref: "not yet built — Engineer Mode, block E",
+      usage: "Drives Engineer Mode's address-space map. AddressSpaceSampler takes no pid argument on purpose: the moment it accepted one it would need task_for_pid, which needs root or a debugger entitlement, so it maps mach_task_self_ and nothing else. Regions are classified by user tag, protection and share mode. On this Mac it surfaces roughly 440 GB of VM_PROT_NONE reservations holding zero resident pages — the clearest demonstration that virtual size means nothing on its own.",
+      ref: "Shared/Samplers/AddressSpaceSampler.swift",
       ask: [
         { q: "Why not show region maps for every process?", a: "task_for_pid is gated behind root or com.apple.security.cs.debugger. Being able to name that boundary is more valuable than pretending it does not exist." },
         { q: "What would you learn from a region map?", a: "Where the heap actually sits, how much of a process's footprint is shared library text mapped from the dyld shared cache rather than private dirty memory, and how stacks are sized per thread." }
@@ -1146,6 +1147,55 @@
         { q: "Why is a Mach port unidirectional?", a: "One task holds the receive right; others hold send rights. Two-way communication means two ports — which is exactly why NSXPCConnection needs both an exportedInterface and a remoteObjectInterface to be bidirectional." }
       ],
       links: [["search", appleSearch("mach_msg")], ["web", web("mach ports bootstrap_look_up send receive right macOS IPC")]]
+    },
+
+    /* ---------------- BSD ---------------- */
+    {
+      name: "sysctlbyname(\"vm.swapusage\")",
+      cat: "bsd", status: "built",
+      what: "Total, used and free swap, filled into an xsw_usage struct.",
+      usage: "Read every sample alongside the Mach page counters. Swap is the honest end of the memory story: macOS compresses cold anonymous pages in RAM long before it writes them to disk, so a machine with a large compressed figure and zero swap is healthy, and swap climbing is the signal that compression stopped being enough.",
+      ref: "Shared/Samplers/MemorySampler.swift",
+      ask: [
+        { q: "Why is this BSD rather than Mach?", a: "Because sysctl is the BSD half of XNU. The same process is a Mach task and a BSD proc, and which name you use decides which API answers. Page states come from host_statistics64 because the VM system is Mach; swap totals come from sysctl because the swap accounting is BSD." },
+        { q: "Is swap usage a problem by itself?", a: "No. Swap that was written once and never touched again costs nothing ongoing. What matters is the rate of change and whether the kernel's own pressure level has moved off normal." }
+      ],
+      links: [["search", appleSearch("sysctlbyname")], ["web", web("vm.swapusage xsw_usage sysctlbyname macOS")]]
+    },
+    {
+      name: "kern.memorystatus_vm_pressure_level",
+      cat: "bsd", status: "built",
+      what: "The kernel's own verdict on memory pressure: 1 normal, 2 warning, 4 critical.",
+      usage: "This replaced an inferred pressure value that had been computed from a percentage. Utilisation and pressure are genuinely different questions — a machine at 90% used with a large file cache is fine, because clean file-backed pages can be dropped for free. The VM panel now shows the kernel's answer next to the utilisation band, and the old percentage logic survives under its real name, utilisationBand.",
+      ref: "Shared/Samplers/MemorySampler.swift",
+      ask: [
+        { q: "Why not just use the percentage?", a: "Because it answers a different question and is wrong often enough to matter. The percentage says how much RAM holds something; pressure says whether the kernel is struggling to find pages. Shipping the first while calling it the second is the single most common memory-monitoring mistake." },
+        { q: "Why a bitmask rather than an enum?", a: "The values are 1, 2 and 4 because the same constants are used as a mask when registering for pressure notifications via dispatch sources, where you want to subscribe to warning-or-critical in one go." }
+      ],
+      links: [["search", appleSearch("memorystatus vm pressure")], ["web", web("kern.memorystatus_vm_pressure_level sysctl macOS normal warning critical")]]
+    },
+    {
+      name: "fts(3)",
+      cat: "bsd", status: "built",
+      what: "The POSIX filesystem tree walker: fts_open, fts_read, fts_close, handing back a struct stat per entry.",
+      usage: "Replaced FileManager.enumerator plus resourceValues in DiskWalker after the Time Profiler showed where the walk's time actually went. Sizes come from st_blocks × 512, which is allocated size — the right answer to \"how much disk do I get back\". FTS_PHYSICAL keeps symlinks from being followed; FTS_NOCHDIR is load-bearing, because without it fts walks by changing the process working directory and the loop suspends at Task.yield() and resumes on any thread.",
+      ref: "Shared/DiskWalker.swift",
+      ask: [
+        { q: "Why was Foundation slower if it makes the same syscalls?", a: "It was not the syscalls. getattrlistbulk was 4% of the profile; URL.resourceValues was 43% and NSDictionary bridging another 14%. Foundation allocated a CFURL and bridged a dictionary per file so that one integer could be read out of it. fts hands back a struct stat and allocates nothing per entry." },
+        { q: "How much did it actually save?", a: "User CPU fell 80% and system CPU did not move at all, which is exactly the shape you expect when the work removed was in userspace. End to end the scan went 1.45s to 1.27s — about 13% — because the walk is I/O bound and a process that is mostly waiting gets back only part of what you save it." }
+      ],
+      links: [["search", appleSearch("fts_read")], ["web", web("fts_open fts_read FTS_PHYSICAL FTS_NOCHDIR st_blocks man page")]]
+    },
+    {
+      name: "statfs",
+      cat: "bsd", status: "built",
+      what: "Filesystem capacity and free blocks for a mount point.",
+      usage: "The disk tile. Block counts multiplied by f_bsize, taken on the same cadence as the Mach counters because it costs almost nothing.",
+      ref: "Shared/Samplers/DiskSampler.swift",
+      ask: [
+        { q: "Why does this disagree with Finder?", a: "Finder reports purgeable space as available — snapshots, caches and cloud-evictable files that the system would reclaim under pressure. statfs reports what is free right now. Neither is wrong; they answer different questions." }
+      ],
+      links: [["search", appleSearch("statfs")], ["web", web("statfs f_bsize f_bavail macOS free space purgeable")]]
     },
 
     /* ---------------- libproc ---------------- */
@@ -1189,7 +1239,7 @@
     },
     {
       name: "proc_pid_rusage(RUSAGE_INFO_V4)",
-      cat: "proc", status: "cut",
+      cat: "proc", status: "built",
       what: "Richer per-process accounting: phys_footprint, energy impact, disk I/O counters, instruction and cycle counts.",
       usage: "Considered and not used. phys_footprint is what Activity Monitor reports, so this is the more faithful source — but it requires rebinding through rusage_info_t and adds a failure mode for a column the dashboard shows five of. Named here because 'why RSS and not footprint' is a fair question.",
       ref: "not used — ProcessSampler uses PROC_PIDTASKINFO instead",
@@ -1197,6 +1247,19 @@
         { q: "What is phys_footprint that RSS is not?", a: "Footprint is the memory the process is actually charged for under memory pressure — it accounts for compressed pages and excludes shared clean pages that RSS counts. It is what the memory limit killer uses, which is why Activity Monitor shows it." }
       ],
       links: [["search", appleSearch("proc_pid_rusage")], ["web", web("proc_pid_rusage RUSAGE_INFO_V4 phys_footprint vs resident size")]]
+    },
+
+    {
+      name: "Objective-C bridging header",
+      cat: "proc", status: "built",
+      what: "SWIFT_OBJC_BRIDGING_HEADER: the header Swift reads to see an Objective-C target's types.",
+      usage: "macengine-cli's process listing is written in Objective-C because the API underneath is C and the C is the awkward part. proc_listpids is a two-call dance — ask with a null buffer for the size, allocate, ask again — and the table can grow between the two calls, so the buffer is over-allocated and the second return value decides what is valid. In Objective-C that is malloc and free next to the call that needs them; Swift then gets an array of value objects with nothing unsafe crossing the boundary.",
+      ref: "macengine-cli/ProcessEnumerator.m",
+      ask: [
+        { q: "Why not just write it in Swift?", a: "You can, and the rest of the app does. But the Swift version is UnsafeMutablePointer, manual capacity arithmetic and a deallocate on every exit path, which is more ceremony around the same C call. Choosing Objective-C at a C boundary is what it is still genuinely good at." },
+        { q: "What does a bridging header not do?", a: "It is one-directional and private to the target. Types it exposes are visible to that module's Swift code but are not re-exported, so another module — a test target, for instance — importing the module still cannot see them." }
+      ],
+      links: [["search", appleSearch("importing objective-c into swift")], ["web", web("SWIFT_OBJC_BRIDGING_HEADER proc_listpids proc_pid_rusage example")]]
     },
 
     /* ---------------- XPC ---------------- */
@@ -1305,13 +1368,14 @@
     },
     {
       name: "Unix domain sockets (AF_UNIX)",
-      cat: "ipc", status: "planned",
+      cat: "ipc", status: "built",
       what: "Byte-stream IPC addressed by a filesystem path, with access controlled by ordinary file permissions.",
-      usage: "The planned third front door: the service listens on a socket so macengine-cli can query it without launching the GUI. Chosen over Mach ports for the time budget — a listener plus a small client is a couple of hours, and it demonstrates a genuinely different IPC model.",
-      ref: "planned — MonitoringIdentifiers.diagnosticSocketPath",
+      usage: "The third front door. The service binds /tmp/macengine-diagnostic.sock and speaks a line protocol — one verb in, one reply out, connection closed — so a client needs no wire types and no XPC interface. macengine-cli is one client and `nc -U` is an equally valid one, which is the whole argument for text over a typed protocol here.",
+      ref: "MonitoringService/DiagnosticSocket.swift",
       ask: [
         { q: "Socket versus Mach port — how do you choose?", a: "Sockets are byte streams with filesystem-based naming and permissions, portable to any Unix, and trivially testable with nc. Mach ports are capability-addressed through the bootstrap namespace, carry rights and typed messages, and are the native macOS primitive. For a diagnostic CLI the socket wins on simplicity and inspectability." },
-        { q: "What is the gotcha with binding?", a: "A stale socket file from a previous run makes bind fail with EADDRINUSE, so you unlink the path first. And the file must be somewhere writable that the sandbox does not rewrite under a container path." }
+        { q: "What is the gotcha with binding?", a: "A stale socket file makes bind fail with EADDRINUSE, so the path has to be unlinked first — but unlinking unconditionally lets a second instance silently steal a live socket from the first. The fix is to probe with connect() and stand down if anyone answers, replacing only a node that is genuinely stale. That same probe is what lets the socket come back by itself after the service is killed." },
+        { q: "How do you know no thread is blocked in accept?", a: "The listening descriptor is O_NONBLOCK and handed to a DispatchSource read source, so GCD does the waiting. Each connection is then read on a Dispatch queue — which is allowed to block — and only the part needing the collector actor hops onto Swift's cooperative pool, which is not." }
       ],
       links: [["search", appleSearch("unix domain socket")], ["web", web("AF_UNIX SOCK_STREAM bind listen accept Swift macOS example")]]
     },
@@ -1512,22 +1576,22 @@
     /* ---------------- instruments ---------------- */
     {
       name: "Time Profiler",
-      cat: "perf", status: "planned",
+      cat: "perf", status: "built",
       what: "A sampling profiler: it interrupts on a timer and records the stack, then aggregates by symbol.",
-      usage: "The planned target is the process sweep and the directory walk, both written to have a measurable hot path. The point is to record real before-and-after numbers rather than to claim familiarity.",
-      ref: "planned — block G",
+      usage: "Pointed at the directory walk inside the service. Of 1132 samples, DiskWalker.measure was 263 — and within it URL.resourceValues was 43% while getattrlistbulk, the actual syscall, was 4%. Foundation was allocating a CFURL and bridging an NSDictionary per file to read one integer out of it. Replacing it with fts(3) cut user CPU by 80% with system CPU unchanged, which is the signature of work removed from userspace rather than from the kernel.",
+      ref: "Documentation/instruments.md",
       ask: [
         { q: "What does a sampling profiler miss?", a: "Anything short-lived relative to the sample interval. A function called ten thousand times for a microsecond each may barely appear, while one slow call is obvious. For counting calls you want instrumentation, not sampling." },
-        { q: "What would you expect the hot path to be here?", a: "proc_pidinfo, one call per process per sweep. That is precisely why enumeration runs on a slower cadence than the Mach counters and the result is cached in between — the optimisation is already in the code, waiting to be measured." }
+        { q: "Did the profile match your guess?", a: "No, and that is the useful part. The guess was proc_pidinfo in the process sweep; the profile said the directory walk, and that the cost there was Foundation's object churn rather than the filesystem. It also exposed a correctness bug — measure() opened a directory enumerator on each top-level child, which yields nothing for a plain file, so 933 files and 546 MB were silently counted as zero." }
       ],
       links: [["search", appleSearch("time profiler instruments")], ["web", web("Instruments Time Profiler sampling interval macOS how it works")]]
     },
     {
       name: "Allocations, Leaks & Zombies",
-      cat: "perf", status: "planned",
+      cat: "perf", status: "built",
       what: "Heap growth over time, unreachable-but-unfreed memory, and messages sent to over-released objects.",
-      usage: "Named explicitly in the posting, so all three get run. The interesting candidate is the name cache in the process sampler — it is pruned against the live pid set each sweep specifically so it does not grow all day, and Allocations is how you prove that.",
-      ref: "planned — block G",
+      usage: "Both processes come back clean: leaks(1) reports 0 leaks for 0 total leaked bytes after a full workspace scan. Worth knowing that Allocations and Leaks expose no schema to xctrace export, so those numbers come from leaks(1) and /usr/bin/time -l rather than from the trace file — peak footprint fell 4.42 MB to 3.92 MB across the fts rewrite.",
+      ref: "Documentation/instruments.md",
       ask: [
         { q: "Leak versus unbounded growth — which does Leaks catch?", a: "Only the first. Leaks finds memory nothing references any more. A cache that grows forever is still fully referenced, so Leaks says nothing and Allocations' growth graph is what exposes it." },
         { q: "Are zombies still relevant in a Swift codebase?", a: "Less so — they detect messaging a deallocated Objective-C object. It still matters at the boundaries: an XPC exported object or a delegate released while a callback is in flight is exactly that bug." }
