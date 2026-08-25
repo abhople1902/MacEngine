@@ -154,8 +154,8 @@ struct ProcessTopologyView: View {
             transport(
                 "Unix domain socket",
                 carries: MonitoringIdentifiers.diagnosticSocketPath,
-                status: "not built yet",
-                isLive: false
+                status: model.serviceInfo?.diagnosticSocketPath == nil ? "not listening" : "listening",
+                isLive: model.serviceInfo?.diagnosticSocketPath != nil
             )
         }
     }

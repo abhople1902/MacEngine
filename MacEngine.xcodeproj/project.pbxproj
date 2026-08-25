@@ -35,6 +35,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		DC8B77AC303DB07D00773F67 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		DCBA98623036D7C6002EEF5C /* Embed XPC Services */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -49,6 +58,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		DC8B77AE303DB07D00773F67 /* macengine-cli */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "macengine-cli"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCB002A630364DB90000F690 /* MacEngine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacEngine.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCB002B330364DBC0000F690 /* MacEngineTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacEngineTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DCB002BD30364DBC0000F690 /* MacEngineUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacEngineUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -69,6 +79,11 @@
 		AB1000010000000000000001 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		DC8B77AF303DB07D00773F67 /* macengine-cli */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "macengine-cli";
 			sourceTree = "<group>";
 		};
 		DCB002A830364DB90000F690 /* MacEngine */ = {
@@ -97,6 +112,13 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		DC8B77AB303DB07D00773F67 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DCB002A330364DB90000F690 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -136,6 +158,7 @@
 				DCB002B630364DBC0000F690 /* MacEngineTests */,
 				DCB002C030364DBC0000F690 /* MacEngineUITests */,
 				DCBA98573036D7C6002EEF5C /* MonitoringService */,
+				DC8B77AF303DB07D00773F67 /* macengine-cli */,
 				DCB002A730364DB90000F690 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -147,6 +170,7 @@
 				DCB002B330364DBC0000F690 /* MacEngineTests.xctest */,
 				DCB002BD30364DBC0000F690 /* MacEngineUITests.xctest */,
 				DCBA98563036D7C6002EEF5C /* MonitoringService.xpc */,
+				DC8B77AE303DB07D00773F67 /* macengine-cli */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -154,6 +178,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		DC8B77AD303DB07D00773F67 /* macengine-cli */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DC8B77B4303DB07D00773F67 /* Build configuration list for PBXNativeTarget "macengine-cli" */;
+			buildPhases = (
+				DC8B77AA303DB07D00773F67 /* Sources */,
+				DC8B77AB303DB07D00773F67 /* Frameworks */,
+				DC8B77AC303DB07D00773F67 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				DC8B77AF303DB07D00773F67 /* macengine-cli */,
+			);
+			name = "macengine-cli";
+			packageProductDependencies = (
+			);
+			productName = "macengine-cli";
+			productReference = DC8B77AE303DB07D00773F67 /* macengine-cli */;
+			productType = "com.apple.product-type.tool";
+		};
 		DCB002A530364DB90000F690 /* MacEngine */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DCB002C730364DBC0000F690 /* Build configuration list for PBXNativeTarget "MacEngine" */;
@@ -258,6 +304,9 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					DC8B77AD303DB07D00773F67 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					DCB002A530364DB90000F690 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -292,6 +341,7 @@
 				DCB002B230364DBC0000F690 /* MacEngineTests */,
 				DCB002BC30364DBC0000F690 /* MacEngineUITests */,
 				DCBA98553036D7C6002EEF5C /* MonitoringService */,
+				DC8B77AD303DB07D00773F67 /* macengine-cli */,
 			);
 		};
 /* End PBXProject section */
@@ -328,6 +378,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		DC8B77AA303DB07D00773F67 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DCB002A230364DB90000F690 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -377,6 +434,34 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		DC8B77B2303DB07D00773F67 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = G4C3VCJCU3;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "macengine-cli/macengine-cli-Bridging-Header.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		DC8B77B3303DB07D00773F67 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = G4C3VCJCU3;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "macengine-cli/macengine-cli-Bridging-Header.h";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		DCB002C530364DBC0000F690 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -700,6 +785,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		DC8B77B4303DB07D00773F67 /* Build configuration list for PBXNativeTarget "macengine-cli" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DC8B77B2303DB07D00773F67 /* Debug */,
+				DC8B77B3303DB07D00773F67 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DCB002A130364DB90000F690 /* Build configuration list for PBXProject "MacEngine" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

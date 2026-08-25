@@ -15,6 +15,13 @@ final class ServiceDelegate: NSObject, NSXPCListenerDelegate {
     private let collector = MetricsCollector()
     private lazy var scanner = WorkspaceScanner(collector: collector)
 
+    /// The non-XPC way in. Opened once, for the life of the process.
+    private lazy var diagnostics = DiagnosticSocket(collector: collector)
+
+    func openDiagnosticSocket() {
+        diagnostics.start()
+    }
+
     func listener(
         _ listener: NSXPCListener,
         shouldAcceptNewConnection newConnection: NSXPCConnection
@@ -47,6 +54,10 @@ final class ServiceDelegate: NSObject, NSXPCListenerDelegate {
 let delegate = ServiceDelegate()
 let listener = NSXPCListener.service()
 listener.delegate = delegate
+
+// Opened before the listener resumes, so a CLI can reach the service during
+// whatever the first XPC client is doing rather than only afterwards.
+delegate.openDiagnosticSocket()
 
 Log.xpc.info("Monitoring service listening (pid \(ProcessInfo.processInfo.processIdentifier))")
 

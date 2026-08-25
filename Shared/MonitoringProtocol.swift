@@ -70,5 +70,11 @@ nonisolated struct ServiceInfo: Codable, Sendable, Equatable {
     let isMonitoring: Bool
     let sampleInterval: TimeInterval
 
+    /// Set only once the diagnostic socket has actually bound, so the topology
+    /// panel reports a door that is open rather than one that was intended.
+    /// Optional because binding is allowed to fail without taking the service
+    /// down with it.
+    var diagnosticSocketPath: String?
+
     var uptime: TimeInterval { Date().timeIntervalSince(startedAt) }
 }

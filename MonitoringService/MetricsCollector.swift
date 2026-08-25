@@ -54,6 +54,19 @@ actor MetricsCollector {
     private var cachedProcesses: [ProcessSample] = []
     private var processesSampledAt: Date?
 
+    /// The most recent reading, kept so that something can *report* state
+    /// without perturbing it. The diagnostic socket answers from here rather
+    /// than calling `snapshot()`, which would advance the sample counter and
+    /// run six hundred `proc_pidinfo` calls because somebody typed `status`.
+    private var latestSnapshot: MetricSnapshot?
+
+    /// Nil until `DiagnosticSocket` reports a successful bind.
+    private var diagnosticSocketPath: String?
+
+    func setDiagnosticSocket(_ path: String?) {
+        diagnosticSocketPath = path
+    }
+
     private var pushTask: Task<Void, Never>?
     private var channel: ClientChannel?
 
@@ -61,13 +74,16 @@ actor MetricsCollector {
         self.channel = channel
     }
 
+    func latest() -> MetricSnapshot? { latestSnapshot }
+
     func info() -> ServiceInfo {
         ServiceInfo(
             processIdentifier: ProcessInfo.processInfo.processIdentifier,
             startedAt: startedAt,
             samplesTaken: samplesTaken,
             isMonitoring: isMonitoring,
-            sampleInterval: sampleInterval
+            sampleInterval: sampleInterval,
+            diagnosticSocketPath: diagnosticSocketPath
         )
     }
 
@@ -118,7 +134,7 @@ actor MetricsCollector {
         let disk = diskSampler.sample(now: now)
         let processes = topProcesses(now: now)
 
-        return MetricSnapshot(
+        let snapshot = MetricSnapshot(
             timestamp: now,
             cpu: cpu,
             memory: memory,
@@ -131,6 +147,9 @@ actor MetricsCollector {
                 encodeStarted: Date()
             )
         )
+
+        latestSnapshot = snapshot
+        return snapshot
     }
 
     private func topProcesses(now: Date) -> [ProcessSample] {
