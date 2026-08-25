@@ -1,18 +1,9 @@
-//
-//  VMCompositionTests.swift
-//  MacEngineTests
-//
-//  The composition bar is only worth drawing if the segments are honest about
-//  what they do and do not account for.
-//
-
 import Foundation
 import Testing
 @testable import MacEngine
 
 @Suite("VM composition")
 struct VMCompositionTests {
-
     @Test("Segments always sum to installed RAM")
     func segmentsSumToTotal() {
         let memory = MemoryMetrics(
@@ -50,8 +41,6 @@ struct VMCompositionTests {
         #expect(memory.compositionCoverage == 0.6)
     }
 
-    /// Counters that overshoot installed RAM — the reads are not atomic, so
-    /// this is possible — must not wrap the remainder into a huge number.
     @Test("Counters that overshoot do not underflow the remainder")
     func remainderDoesNotUnderflow() {
         let memory = MemoryMetrics(
@@ -78,10 +67,6 @@ struct VMCompositionTests {
 
     // MARK: - Against the live machine
 
-    /// The counters never reach installed RAM — firmware and the kernel carve
-    /// out memory before the VM system manages any of it, which measures at a
-    /// stable ~6% here. The bar shows that gap instead of scaling it away, so
-    /// the assertion is that it stays a carve-out and not a bug.
     @Test("This Mac's counters cover the memory the VM actually manages")
     func liveCountersCoverManagedMemory() {
         let memory = MemorySampler().sample()

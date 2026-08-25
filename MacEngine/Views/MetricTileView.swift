@@ -1,11 +1,5 @@
-//
-//  MetricTileView.swift
-//  MacEngine
-//
-
 import SwiftUI
 
-/// One headline number with a fill bar and a supporting line.
 struct MetricTileView: View {
     let title: String
     let value: String

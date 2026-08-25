@@ -1,8 +1,3 @@
-//
-//  WorkspaceScanModelTests.swift
-//  MacEngineTests
-//
-
 import XCTest
 @testable import MacEngine
 
@@ -50,8 +45,6 @@ final class WorkspaceScanModelTests: XCTestCase {
     }
 
     func testScanUpdateSurvivesTheJSONRoundTripUsedByXPC() throws {
-        // An enum with associated values is the part of the wire format most
-        // likely to break silently, so it is the part with a test.
         let original = ScanUpdate.progress(location: "ModuleCache.noindex", completed: 3, total: 14)
         let decoded = try JSONDecoder().decode(
             ScanUpdate.self,

@@ -1,15 +1,3 @@
-//
-//  DeveloperFolders.swift
-//  Shared
-//
-//  Where Xcode actually puts things, and what each location is for.
-//
-//  The list is deliberately wider than the Xcode UI admits to. Locations that
-//  are empty on this machine are still enumerated and reported at zero, because
-//  the ones that are empty here (Archives, iOS DeviceSupport) are exactly the
-//  ones that reach tens of gigabytes on a machine that ships to devices.
-//
-
 import Foundation
 
 nonisolated struct DeveloperLocation: Sendable {
@@ -41,8 +29,6 @@ nonisolated enum DeveloperFolders {
         home.appending(path: "Library/Caches/org.swift.swiftpm", directoryHint: .isDirectory)
     }
 
-    /// Everything worth measuring for a given workspace. `projectDirectory` and
-    /// `derivedData` vary per project; the rest are machine-wide.
     static func locations(
         projectDirectory: URL,
         derivedData: URL?
@@ -165,12 +151,7 @@ nonisolated enum DeveloperFolders {
     }
 }
 
-/// Maps a chosen .xcodeproj or .xcworkspace to its DerivedData folder.
 nonisolated enum WorkspaceLocator {
-    /// DerivedData folders are named `<ProjectName>-<28 character hash>` and the
-    /// hash is not reproducible from the path — so it is not computed, it is
-    /// looked up. Every folder holds an info.plist naming the workspace it
-    /// belongs to, and that is the only reliable link between the two.
     static func derivedData(
         forWorkspaceAt workspace: URL,
         in root: URL = DeveloperFolders.derivedDataRoot
@@ -184,8 +165,6 @@ nonisolated enum WorkspaceLocator {
         )) ?? []
 
         for candidate in candidates {
-            // The shared caches live alongside project folders and have no
-            // info.plist, so they fall out here rather than needing a name test.
             let plist = candidate.appending(path: "info.plist", directoryHint: .notDirectory)
             guard let data = try? Data(contentsOf: plist),
                   let parsed = try? PropertyListSerialization.propertyList(from: data, format: nil),

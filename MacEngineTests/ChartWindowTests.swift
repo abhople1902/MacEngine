@@ -1,12 +1,3 @@
-//
-//  ChartWindowTests.swift
-//  MacEngineTests
-//
-//  The history chart's axis is a fixed-width window, so the two things worth
-//  pinning down are that it does not move while the trace is still filling it,
-//  and that it does move once the trace has run out of room.
-//
-
 import Foundation
 import Testing
 @testable import MacEngine

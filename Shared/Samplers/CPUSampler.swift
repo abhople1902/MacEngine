@@ -1,12 +1,3 @@
-//
-//  CPUSampler.swift
-//  MacEngine
-//
-//  Reads the kernel's cumulative CPU tick counters and converts consecutive
-//  readings into a utilisation fraction. The counters are monotonic totals, so
-//  a single reading is meaningless — usage only exists between two samples.
-//
-
 import OSLog
 import Darwin
 import Foundation
@@ -15,8 +6,6 @@ nonisolated final class CPUSampler {
     private var previous: host_cpu_load_info?
     private let coreCount = ProcessInfo.processInfo.processorCount
 
-    /// Utilisation since the previous call. The first call has no baseline and
-    /// reports idle.
     func sample() -> CPUMetrics {
         guard let ticks = Self.hostCPULoad() else {
             Log.metrics.error("host_statistics(HOST_CPU_LOAD_INFO) failed")
@@ -34,7 +23,7 @@ nonisolated final class CPUSampler {
             )
         }
 
-        // &- so a counter wrap produces a small delta rather than a crash.
+        // &- : the kernel's tick counters wrap, and a wrapped delta beats a trap.
         let user = Double(ticks.cpu_ticks.0 &- baseline.cpu_ticks.0)
         let system = Double(ticks.cpu_ticks.1 &- baseline.cpu_ticks.1)
         let idle = Double(ticks.cpu_ticks.2 &- baseline.cpu_ticks.2)
@@ -60,7 +49,6 @@ nonisolated final class CPUSampler {
         )
     }
 
-    /// Discards the baseline so the next sample starts a fresh interval.
     func reset() {
         previous = nil
     }

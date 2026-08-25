@@ -1,8 +1,3 @@
-//
-//  StatusPillView.swift
-//  MacEngine
-//
-
 import SwiftUI
 
 struct StatusPillView: View {

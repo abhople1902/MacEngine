@@ -1,16 +1,7 @@
-//
-//  SamplerTests.swift
-//  MacEngineTests
-//
-//  These run against the live machine inside the sandboxed host app, so they
-//  also prove the Mach and volume queries survive the app's entitlements.
-//
-
 import XCTest
 @testable import MacEngine
 
 final class SamplerTests: XCTestCase {
-
     func testFirstCPUSampleReportsIdleBecauseThereIsNoBaseline() {
         let sample = CPUSampler().sample()
         XCTAssertEqual(sample.idleFraction, 1)

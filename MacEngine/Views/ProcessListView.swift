@@ -1,12 +1,3 @@
-//
-//  ProcessListView.swift
-//  MacEngine
-//
-//  Rows arrive from the monitoring service. The app deliberately does not
-//  enumerate processes itself: reading task info for processes it does not own
-//  is exactly the privileged work that belongs in the isolated process.
-//
-
 import SwiftUI
 
 struct ProcessListView: View {

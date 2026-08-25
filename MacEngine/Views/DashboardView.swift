@@ -1,16 +1,8 @@
-//
-//  DashboardView.swift
-//  MacEngine
-//
-
 import SwiftUI
 
 struct DashboardView: View {
     @Bindable var model: DashboardViewModel
 
-    /// Engineer Mode is one stored boolean. Each section reads it and renders
-    /// either the summary or the mechanism — there is deliberately no second
-    /// view hierarchy to keep in step.
     @AppStorage("engineerMode") private var engineerMode = false
 
     private var cpu: CPUMetrics { model.latest?.cpu ?? .zero }
@@ -189,7 +181,6 @@ struct DashboardView: View {
     }
 }
 
-/// Titled card used by every section of the dashboard.
 struct DashboardSection<Content: View>: View {
     private let title: String
     private let content: Content

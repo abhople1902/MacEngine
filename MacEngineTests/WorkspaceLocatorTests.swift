@@ -1,8 +1,3 @@
-//
-//  WorkspaceLocatorTests.swift
-//  MacEngineTests
-//
-
 import XCTest
 @testable import MacEngine
 
@@ -67,8 +62,6 @@ final class WorkspaceLocatorTests: XCTestCase {
     }
 
     func testNameSimilarityIsNotEnoughToMatch() throws {
-        // Same project name, different checkout — the hash differs and only the
-        // recorded path can tell them apart.
         try makeFolder(named: "Target-dddddddddddddddddddddddddddd", claiming: "/Users/someone/Target/Target.xcodeproj")
 
         let found = WorkspaceLocator.derivedData(
@@ -80,11 +73,9 @@ final class WorkspaceLocatorTests: XCTestCase {
     }
 
     func testThisProjectResolvesOnThisMachine() throws {
-        // The live check: MacEngine has been built here, so its own DerivedData
-        // folder exists and must be findable.
         let project = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()  // MacEngineTests
-            .deletingLastPathComponent()  // repo root
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
             .appending(path: "MacEngine.xcodeproj", directoryHint: .isDirectory)
 
         try XCTSkipUnless(

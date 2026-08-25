@@ -1,17 +1,8 @@
-//
-//  DashboardViewModelTests.swift
-//  MacEngineTests
-//
-//  Drives the view model against a stub provider so the sampling loop, the
-//  history window and the failure handling can be tested without the machine.
-//
-
 import XCTest
 @testable import MacEngine
 
 @MainActor
 final class DashboardViewModelTests: XCTestCase {
-
     func testStartStreamsSnapshotsFromTheProvider() async throws {
         let model = DashboardViewModel(provider: StubMetricsProvider())
         model.sampleInterval = 0.01
@@ -107,8 +98,6 @@ final class DashboardViewModelTests: XCTestCase {
 
     // MARK: - Helpers
 
-    /// Polls rather than sleeping a fixed duration, so a fast machine finishes
-    /// fast and a slow one still passes.
     private func waitUntil(
         _ description: String,
         timeout: TimeInterval = 5,
@@ -123,7 +112,6 @@ final class DashboardViewModelTests: XCTestCase {
     }
 }
 
-/// Emits canned snapshots and can be told to fail on demand.
 private actor StubMetricsProvider: MetricsProviding {
     nonisolated let source: MetricsSource
 

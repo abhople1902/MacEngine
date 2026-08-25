@@ -1,21 +1,8 @@
-//
-//  AddressSpaceView.swift
-//  MacEngine
-//
-//  The heap-and-stack diagram, drawn from live data rather than from memory.
-//
-//  Both processes are shown side by side because the comparison is the lesson:
-//  the app carries a SwiftUI view hierarchy and the service carries a sampler,
-//  and it shows in the shape of their address spaces.
-//
-
 import SwiftUI
 
 struct AddressSpaceView: View {
     @Bindable var model: DashboardViewModel
 
-    /// Structural data. Walking a few hundred regions twice a second would be
-    /// wasteful and would tell you nothing new.
     private static let refresh: Duration = .seconds(4)
 
     var body: some View {
@@ -47,8 +34,6 @@ struct AddressSpaceView: View {
             : "No service process to map"
     }
 
-    /// The boundary is worth stating outright rather than leaving it as an
-    /// absence someone has to notice.
     private var caveat: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "lock")
@@ -99,8 +84,6 @@ struct AddressSpaceView: View {
                     .foregroundStyle(Theme.inkSecondary)
             }
 
-            // The headline of the whole panel: two numbers that disagree by
-            // three orders of magnitude, and only one of them is memory.
             HStack(spacing: 6) {
                 Text(map.virtualBytes.byteLabel)
                     .font(.metricFigure(15))
@@ -141,8 +124,6 @@ struct AddressSpaceView: View {
                     .frame(width: 68, alignment: .trailing)
             }
 
-            // Two bars on one baseline: the claim, and the part of it that is
-            // real. Both scaled to the same ceiling so the panels compare.
             ResidencyBar(
                 virtualFraction: fraction(group.virtualBytes, of: virtualCeiling),
                 residentFraction: fraction(group.residentBytes, of: virtualCeiling),
@@ -162,8 +143,6 @@ struct AddressSpaceView: View {
     }
 }
 
-/// Virtual as a hairline outline, resident as the fill inside it — so a group
-/// that claims a lot and uses none reads as an empty box rather than a bar.
 private struct ResidencyBar: View {
     let virtualFraction: Double
     let residentFraction: Double

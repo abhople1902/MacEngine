@@ -1,13 +1,7 @@
-//
-//  RingBufferTests.swift
-//  MacEngineTests
-//
-
 import XCTest
 @testable import MacEngine
 
 final class RingBufferTests: XCTestCase {
-
     func testElementsAreEmptyBeforeAnyAppend() {
         let buffer = RingBuffer<Int>(capacity: 4)
         XCTAssertTrue(buffer.isEmpty)

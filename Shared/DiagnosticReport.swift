@@ -1,20 +1,5 @@
-//
-//  DiagnosticReport.swift
-//  Shared
-//
-//  The text the diagnostic socket speaks.
-//
-//  Kept separate from the socket itself on purpose. The transport needs a live
-//  service and a filesystem path to test; the wording needs neither, so it
-//  lives here as a pure function over values and is covered by ordinary unit
-//  tests. The socket is then only responsible for moving bytes.
-//
-
 import Foundation
 
-/// The verbs the diagnostic socket understands. One request, one reply, one
-/// connection — deliberately the simplest thing that a shell script or `nc`
-/// can drive without a client library.
 nonisolated enum DiagnosticVerb: String, CaseIterable {
     case status
     case snapshot
@@ -30,10 +15,6 @@ nonisolated enum DiagnosticVerb: String, CaseIterable {
 }
 
 nonisolated enum DiagnosticReport {
-    /// Strict request/response: the server never speaks first. A server that
-    /// greets you means every client has to know to discard the greeting, and
-    /// an empty request already returns the verb list, so `nc -U <path>` plus
-    /// Return is discoverable enough.
     static func help() -> String {
         DiagnosticVerb.allCases
             .map { "  \($0.rawValue.padding(toLength: 10, withPad: " ", startingAt: 0))\($0.summary)" }
@@ -44,9 +25,6 @@ nonisolated enum DiagnosticReport {
         "unknown verb \"\(verb)\"\n\nverbs:\n\(help())"
     }
 
-    /// The `status` reply. Two blocks: what the service is doing, and what it
-    /// last saw. A snapshot may legitimately be absent — the service starts
-    /// sampling only when a client asks it to.
     static func status(info: ServiceInfo, snapshot: MetricSnapshot?, now: Date = Date()) -> String {
         var lines: [String] = ["macengine"]
 
@@ -94,7 +72,6 @@ nonisolated enum DiagnosticReport {
         String(format: "%.1f%%", (fraction * 100).rounded(toPlaces: 1))
     }
 
-    /// Decimal units, matching what the rest of the app and Finder report.
     static func bytes(_ count: UInt64) -> String {
         let units = ["B", "KB", "MB", "GB", "TB"]
         var value = Double(count)

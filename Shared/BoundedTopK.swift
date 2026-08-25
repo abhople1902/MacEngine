@@ -1,17 +1,3 @@
-//
-//  BoundedTopK.swift
-//  Shared
-//
-//  Keeps the K highest-scoring elements out of a stream without retaining or
-//  sorting the whole stream. There are ~600 processes on a normal Mac and the
-//  dashboard shows five of them, so sorting everything to throw away 99% of the
-//  result is the obvious waste to avoid: this is O(n log k) and holds k
-//  elements, against O(n log n) and n for a full sort.
-//
-//  Implemented as a min-heap of the survivors, so the element most at risk of
-//  being displaced is always the root and the comparison against it is O(1).
-//
-
 import Foundation
 
 nonisolated struct BoundedTopK<Element> {
@@ -26,7 +12,6 @@ nonisolated struct BoundedTopK<Element> {
     var count: Int { storage.count }
     var isEmpty: Bool { storage.isEmpty }
 
-    /// The lowest score currently retained, or `nil` while below capacity.
     var threshold: Double? {
         storage.count < capacity ? nil : storage.first?.score
     }
@@ -40,14 +25,11 @@ nonisolated struct BoundedTopK<Element> {
             return
         }
 
-        // Ties keep the incumbent: a process that is already on screen should
-        // not flicker out for an equal-scoring newcomer.
         guard let weakest = storage.first, score > weakest.score else { return }
         storage[0] = (score, value)
         siftDown(from: 0)
     }
 
-    /// Highest score first. Sorting happens once, over at most `capacity` items.
     func sortedDescending() -> [Element] {
         storage.sorted { $0.score > $1.score }.map(\.value)
     }

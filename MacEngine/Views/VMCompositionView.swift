@@ -1,12 +1,3 @@
-//
-//  VMCompositionView.swift
-//  MacEngine
-//
-//  Engineer Mode's memory panel. The dashboard tile answers "how full is it";
-//  this answers "what is it full of, and is that a problem" — which are
-//  different questions with different sources.
-//
-
 import SwiftUI
 
 struct VMCompositionView: View {
@@ -43,8 +34,6 @@ struct VMCompositionView: View {
         .accessibilityLabel(accessibilitySummary)
     }
 
-    /// Segments below a pixel or two vanish entirely, which reads as a missing
-    /// state rather than a small one — so every non-zero segment keeps a floor.
     private func width(of segment: VMSegment, in total: CGFloat) -> CGFloat {
         guard memory.totalBytes > 0, segment.bytes > 0 else { return 0 }
         let exact = total * CGFloat(Double(segment.bytes) / Double(memory.totalBytes))
@@ -94,8 +83,6 @@ struct VMCompositionView: View {
 
     // MARK: - Verdict
 
-    /// Swap and the kernel pressure level, side by side with utilisation,
-    /// because the three disagreeing is the interesting case.
     private var verdict: some View {
         HStack(alignment: .top, spacing: 22) {
             reading(
@@ -157,8 +144,6 @@ struct VMCompositionView: View {
 }
 
 extension VMPageState {
-    /// Warm for memory that is in use, cool for memory that is available, grey
-    /// for the part the VM system never sees.
     var tint: Color {
         switch self {
         case .wired: Color(red: 0.937, green: 0.396, blue: 0.451)

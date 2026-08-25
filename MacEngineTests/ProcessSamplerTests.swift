@@ -1,11 +1,3 @@
-//
-//  ProcessSamplerTests.swift
-//  MacEngineTests
-//
-//  Runs against the live process table, so assertions stay on properties that
-//  hold on any Mac rather than on specific processes or numbers.
-//
-
 import XCTest
 @testable import MacEngine
 
@@ -33,7 +25,6 @@ final class ProcessSamplerTests: XCTestCase {
     func testRowsArriveSortedByCPUDescending() {
         let sampler = ProcessSampler()
         _ = sampler.sample(limit: 5, now: Date())
-        // Give the machine an interval to accumulate CPU time against.
         let second = sampler.sample(limit: 5, now: Date().addingTimeInterval(0.5))
 
         let fractions = second.map(\.cpuFraction)

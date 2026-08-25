@@ -1,11 +1,3 @@
-//
-//  DiskSampler.swift
-//  MacEngine
-//
-//  Capacity of the boot volume. Cheap, but not free — the value is cached and
-//  refreshed on a slower cadence than CPU and memory.
-//
-
 import OSLog
 import Foundation
 

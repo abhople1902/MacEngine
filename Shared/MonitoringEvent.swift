@@ -1,12 +1,3 @@
-//
-//  MonitoringEvent.swift
-//  Shared
-//
-//  Lifecycle events broadcast over DistributedNotificationCenter. These are
-//  deliberately *not* sent over XPC: they are low-rate, one-to-many, and must
-//  still arrive when the XPC connection is exactly what has gone wrong.
-//
-
 import Foundation
 
 nonisolated enum MonitoringEvent: String, CaseIterable, Sendable {
@@ -29,7 +20,6 @@ nonisolated enum MonitoringEvent: String, CaseIterable, Sendable {
     }
 }
 
-/// A received lifecycle event, timestamped for the diagnostics log.
 nonisolated struct MonitoringEventRecord: Identifiable, Sendable, Equatable {
     let id = UUID()
     let event: MonitoringEvent

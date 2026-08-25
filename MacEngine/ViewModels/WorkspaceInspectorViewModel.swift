@@ -1,11 +1,3 @@
-//
-//  WorkspaceInspectorViewModel.swift
-//  MacEngine
-//
-//  Owns the workspace scan from the app's side. It picks the folder and renders
-//  the answer; every byte of the measuring happens in the monitoring service.
-//
-
 import OSLog
 import SwiftUI
 import Foundation
@@ -36,8 +28,6 @@ final class WorkspaceInspectorViewModel {
     private(set) var scan: WorkspaceScan?
     private(set) var workspaceName: String?
 
-    /// Rows the user has opened, by path. Held here rather than in the view so
-    /// a rescan does not collapse everything the user was looking at.
     var expanded: Set<String> = []
 
     private let scanner: (any WorkspaceScanning)?
@@ -52,8 +42,6 @@ final class WorkspaceInspectorViewModel {
 
     // MARK: - Actions
 
-    /// .xcodeproj and .xcworkspace are file packages, so the panel is told to
-    /// treat them as files rather than descend into them.
     func chooseWorkspace() {
         let panel = NSOpenPanel()
         panel.title = "Choose an Xcode project or workspace"
@@ -71,8 +59,6 @@ final class WorkspaceInspectorViewModel {
 
         guard panel.runModal() == .OK, let url = panel.url else { return }
 
-        // Belt and braces: the declared types are usually right, but a dynamic
-        // UTType fallback would let anything through.
         let extensions = ["xcodeproj", "xcworkspace"]
         guard extensions.contains(url.pathExtension) else {
             state = .failed("\(url.lastPathComponent) is not an Xcode project or workspace")

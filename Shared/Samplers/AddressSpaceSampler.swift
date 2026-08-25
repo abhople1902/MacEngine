@@ -1,25 +1,10 @@
-//
-//  AddressSpaceSampler.swift
-//  MacEngine
-//
-//  Walks a task's VM regions with `mach_vm_region_recurse` and folds them into
-//  the groups `AddressSpaceMap` reports.
-//
-//  The task is always `mach_task_self_`. There is no pid parameter on purpose:
-//  the only way to get another process's task port is `task_for_pid`, and the
-//  moment this function took a pid it would grow one.
-//
-
 import OSLog
 import Darwin
 import Foundation
 
 nonisolated struct AddressSpaceSampler {
-    /// Ceiling on the walk. A healthy process has a few hundred regions; a
-    /// runaway one should not be able to stall the sampler.
     static let regionLimit = 20_000
 
-    /// Tags the malloc zones stamp on their own regions.
     private static let mallocTags: Set<UInt32> = [
         UInt32(VM_MEMORY_MALLOC),
         UInt32(VM_MEMORY_MALLOC_SMALL),
@@ -57,12 +42,8 @@ nonisolated struct AddressSpaceSampler {
                 }
             }
 
-            // KERN_INVALID_ADDRESS is the ordinary way this loop ends: there is
-            // nothing mapped at or above `address`.
             guard result == KERN_SUCCESS else { break }
 
-            // A submap is a container, not a mapping. Descend and re-read the
-            // same address one level down.
             if info.is_submap != 0 {
                 depth += 1
                 continue
@@ -107,9 +88,6 @@ nonisolated struct AddressSpaceSampler {
         )
     }
 
-    /// Order matters: the allocator's own tags are the most reliable signal, a
-    /// backing file is the next most reliable, and no-access reservations have
-    /// to be separated from real anonymous memory or they swamp the totals.
     static func classify(
         tag: UInt32,
         protection: vm_prot_t,

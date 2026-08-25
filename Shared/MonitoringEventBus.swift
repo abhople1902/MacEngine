@@ -1,13 +1,3 @@
-//
-//  MonitoringEventBus.swift
-//  Shared
-//
-//  Thin wrapper over DistributedNotificationCenter so every process posts the
-//  same shape. Each notification carries the sender's pid, which lets a
-//  receiver ignore the events it posted itself — the notification center
-//  delivers back to the posting process too.
-//
-
 import Foundation
 
 nonisolated enum MonitoringEventBus {
@@ -28,7 +18,6 @@ nonisolated enum MonitoringEventBus {
         )
     }
 
-    /// `nil` when the notification came from this process and should be ignored.
     static func payload(from notification: Notification) -> (detail: String?, senderPID: Int32)? {
         let info = notification.userInfo as? [String: String]
         let senderPID = info?[senderPIDKey].flatMap(Int32.init)

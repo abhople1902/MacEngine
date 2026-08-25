@@ -1,18 +1,7 @@
-//
-//  RingBuffer.swift
-//  MacEngine
-//
-//  Fixed-capacity history buffer. The dashboard keeps a rolling window of
-//  samples and drops the oldest one on every tick; an Array with
-//  `removeFirst()` makes that O(n) per tick, this makes it O(1) with a single
-//  allocation for the lifetime of the buffer.
-//
-
 import Foundation
 
 nonisolated struct RingBuffer<Element> {
     private var storage: [Element?]
-    /// Index the next append writes to.
     private var writeIndex = 0
     private(set) var count = 0
 
@@ -33,7 +22,6 @@ nonisolated struct RingBuffer<Element> {
         if count < capacity { count += 1 }
     }
 
-    /// Contents from oldest to newest.
     var elements: [Element] {
         guard count > 0 else { return [] }
         let start = isFull ? writeIndex : 0

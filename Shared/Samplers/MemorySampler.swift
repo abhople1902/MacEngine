@@ -1,19 +1,10 @@
-//
-//  MemorySampler.swift
-//  MacEngine
-//
-//  Reads the Mach VM statistics and folds them into the same three buckets
-//  Activity Monitor reports: app memory, wired memory and compressed memory.
-//  Engineer Mode wants the states underneath that summary, so the full page
-//  composition, swap usage and the kernel's pressure level come back too.
-//
-
 import OSLog
 import Darwin
 import Foundation
 
 nonisolated final class MemorySampler {
     private let totalBytes = ProcessInfo.processInfo.physicalMemory
+        // Page size is 16 KB on Apple Silicon; 4096 under-reports by 4x.
     private let pageSize = UInt64(vm_kernel_page_size)
 
     func sample() -> MemoryMetrics {
@@ -22,9 +13,6 @@ nonisolated final class MemorySampler {
             return .zero
         }
 
-        // App memory is anonymous pages minus the purgeable ones the system can
-        // reclaim on demand; subtracting with saturation guards against the two
-        // counters being read a hair apart.
         let anonymous = UInt64(stats.internal_page_count)
         let purgeable = UInt64(stats.purgeable_count)
         let appPages = anonymous > purgeable ? anonymous - purgeable : 0
@@ -62,7 +50,6 @@ nonisolated final class MemorySampler {
         return result == KERN_SUCCESS ? stats : nil
     }
 
-    /// `vm.swapusage` hands back an `xsw_usage` by value.
     private static func swapUsage() -> SwapUsage {
         var usage = xsw_usage()
         var size = MemoryLayout<xsw_usage>.size
@@ -73,9 +60,6 @@ nonisolated final class MemorySampler {
         return SwapUsage(totalBytes: usage.xsu_total, usedBytes: usage.xsu_used)
     }
 
-    /// The kernel's verdict, which is a different question from "how full is
-    /// the machine". `kern.memorystatus_vm_pressure_level` is a bitmask:
-    /// 1 normal, 2 warning, 4 critical.
     private static func pressureLevel() -> MemoryPressure {
         var level: Int32 = 0
         var size = MemoryLayout<Int32>.size
@@ -88,8 +72,6 @@ nonisolated final class MemorySampler {
 }
 
 nonisolated extension MemoryPressure {
-    /// Anything the kernel has not told us about is reported as normal rather
-    /// than guessed at — a wrong alarm is worse than no alarm.
     init(pressureLevel: Int32) {
         switch pressureLevel {
         case 4: self = .critical

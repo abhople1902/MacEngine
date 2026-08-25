@@ -1,19 +1,6 @@
-//
-//  MetricsCollector.swift
-//  MonitoringService
-//
-//  All sampling for the whole system happens here, in a process that is not the
-//  UI. The samplers themselves are the ones from Block A, moved into `Shared`
-//  and otherwise untouched — the architecture changed, the measurement code did
-//  not.
-//
-
 import OSLog
 import Foundation
 
-/// `NSXPCConnection` is documented as thread-safe but is not `Sendable`, so
-/// handing one to an actor needs an explicit unchecked wrapper. Sending is
-/// wrapped in an error handler because the app can vanish at any moment.
 nonisolated struct ClientChannel: @unchecked Sendable {
     let connection: NSXPCConnection
 
@@ -34,10 +21,6 @@ nonisolated struct ClientChannel: @unchecked Sendable {
 }
 
 actor MetricsCollector {
-    /// Process enumeration costs a `proc_pidinfo` call per process — roughly
-    /// six hundred of them. System metrics are cheap enough to take on every
-    /// tick, so the two run on separate cadences and the process list is
-    /// reused in between.
     private static let processRefreshInterval: TimeInterval = 1.0
     private static let topProcessCount = 5
 
@@ -54,13 +37,8 @@ actor MetricsCollector {
     private var cachedProcesses: [ProcessSample] = []
     private var processesSampledAt: Date?
 
-    /// The most recent reading, kept so that something can *report* state
-    /// without perturbing it. The diagnostic socket answers from here rather
-    /// than calling `snapshot()`, which would advance the sample counter and
-    /// run six hundred `proc_pidinfo` calls because somebody typed `status`.
     private var latestSnapshot: MetricSnapshot?
 
-    /// Nil until `DiagnosticSocket` reports a successful bind.
     private var diagnosticSocketPath: String?
 
     func setDiagnosticSocket(_ path: String?) {
@@ -92,8 +70,6 @@ actor MetricsCollector {
         guard !isMonitoring else { return }
         isMonitoring = true
 
-        // Prime both delta-based samplers so the first published sample spans a
-        // real interval rather than all of uptime.
         cpuSampler.reset()
         processSampler.reset()
         _ = cpuSampler.sample()
@@ -106,8 +82,6 @@ actor MetricsCollector {
         }
     }
 
-    /// Exposed for the workspace scan, which wants the toolchain's live cost
-    /// alongside its disk cost and should not own a second process sampler.
     func toolchainFootprint() -> ToolchainFootprint {
         processSampler.toolchainFootprint()
     }
@@ -123,8 +97,6 @@ actor MetricsCollector {
         MonitoringEventBus.post(.monitoringStopped, detail: "\(samplesTaken) samples")
     }
 
-    /// One reading taken now, whether or not the push loop is running, so a
-    /// client that only ever polls still gets real data.
     func snapshot(now: Date = Date()) -> MetricSnapshot {
         samplesTaken += 1
 
@@ -143,7 +115,6 @@ actor MetricsCollector {
             timing: PipelineTiming(
                 collectStarted: collectStarted,
                 collectEnded: Date(),
-                // Overwritten the instant before encoding actually starts.
                 encodeStarted: Date()
             )
         )
@@ -180,7 +151,7 @@ actor MetricsCollector {
             do {
                 try await Task.sleep(for: .seconds(sampleInterval))
             } catch {
-                return // cancelled while sleeping
+                return
             }
         }
     }

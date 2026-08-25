@@ -1,12 +1,3 @@
-//
-//  Log.swift
-//  Shared
-//
-//  One os.Logger per subsystem area. Using the unified log (rather than print)
-//  means the app, the XPC service and the agent all stream into a single
-//  `log stream --predicate 'subsystem == "com.AyushBhople.MacEngine"'` session.
-//
-
 import OSLog
 
 nonisolated enum Log {

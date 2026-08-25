@@ -1,15 +1,3 @@
-//
-//  WorkspaceScanner.swift
-//  MonitoringService
-//
-//  Runs the workspace measurement in the service rather than the app.
-//
-//  Two reasons, and the second is the one that matters. Walking ten gigabytes
-//  of metadata would make the dashboard stutter if it ran on the app's side.
-//  And keeping it here means the profiling target in block G is a process that
-//  does nothing but work, so the Time Profiler trace is not two-thirds SwiftUI.
-//
-
 import OSLog
 import Foundation
 
@@ -24,16 +12,9 @@ actor WorkspaceScanner {
 
     var isScanning: Bool { running != nil }
 
-    /// The channel arrives with the request rather than being attached when the
-    /// connection is accepted. Attaching separately meant the accept-time hop
-    /// onto this actor could still be in flight when the first scan began, and
-    /// a one-shot `.started` sent before it landed was dropped silently. Taking
-    /// it here also means results go back to whoever actually asked.
     func start(path: String, channel: ClientChannel) {
         self.channel = channel
 
-        // A second request supersedes the first rather than queueing behind it:
-        // the user picked a different project, they do not want the old answer.
         running?.cancel()
 
         running = Task { [weak self] in
@@ -60,7 +41,6 @@ actor WorkspaceScanner {
         emit(.started(workspacePath: workspace.path))
         Log.metrics.info("Workspace scan started for \(workspace.lastPathComponent, privacy: .public)")
 
-        // A .xcodeproj is a bundle, so the project itself is its parent folder.
         let projectDirectory = workspace.deletingLastPathComponent()
         let derivedData = WorkspaceLocator.derivedData(forWorkspaceAt: workspace)
 

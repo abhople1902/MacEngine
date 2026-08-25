@@ -1,11 +1,3 @@
-//
-//  AddressSpaceTests.swift
-//  MacEngineTests
-//
-//  Classification is the only judgement the region walk makes, so it is the
-//  part worth pinning down. The walk itself is checked against this process.
-//
-
 import Darwin
 import Foundation
 import Testing
@@ -13,7 +5,6 @@ import Testing
 
 @Suite("Address space")
 struct AddressSpaceTests {
-
     // MARK: - Classification
 
     @Test("Allocator tags win over everything else")
@@ -61,8 +52,6 @@ struct AddressSpaceTests {
         #expect(readable == .mappedFile)
     }
 
-    /// The distinction that makes the panel readable: hundreds of gigabytes of
-    /// no-access reservation must not be counted as anonymous memory.
     @Test("No-access mappings are reservations, not memory")
     func unreadableAnonymousBecomesReserved() {
         let kind = AddressSpaceSampler.classify(

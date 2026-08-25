@@ -1,12 +1,3 @@
-//
-//  DashboardViewModel.swift
-//  MacEngine
-//
-//  Owns the sampling loop, the rolling history and the connection state the
-//  dashboard renders. It talks to `MetricsProviding` and never to a sampler
-//  directly, so Block B can hand it an XPC-backed provider unchanged.
-//
-
 import OSLog
 import Foundation
 import Observation
@@ -14,9 +5,7 @@ import Observation
 @MainActor
 @Observable
 final class DashboardViewModel {
-    /// Two minutes of history at the default one-second cadence.
     private static let historyCapacity = 120
-    /// Consecutive samples above `highCPUThreshold` before an event is raised.
     private static let highCPUSampleCount = 3
     private static let highCPUThreshold = 0.85
     private static let eventLogCapacity = 50
@@ -53,14 +42,9 @@ final class DashboardViewModel {
     private(set) var events: [MonitoringEventRecord] = []
     private(set) var samplesTaken = 0
 
-    /// What the monitoring process says about itself. Only Engineer Mode asks
-    /// for it, and it asks on its own cadence — a topology panel nobody is
-    /// looking at should not cost an XPC round-trip every tick.
     private(set) var serviceInfo: ServiceInfo?
     private(set) var pushesReceived = 0
 
-    /// One map per process. The app walks its own task directly; the service is
-    /// asked to walk its own, because nothing else can.
     private(set) var appAddressSpace: AddressSpaceMap?
     private(set) var serviceAddressSpace: AddressSpaceMap?
 
@@ -74,13 +58,10 @@ final class DashboardViewModel {
 
     var source: MetricsSource { provider.source }
 
-    /// Only an out-of-process provider has a process that can be killed.
     var canSimulateCrash: Bool { provider is any CrashSimulating }
 
-    /// Only an out-of-process provider has a peer worth describing.
     var canIntrospectService: Bool { provider is any ServiceIntrospectable }
 
-    /// Snapshots oldest to newest, for the history chart.
     var recentSnapshots: [MetricSnapshot] { history.elements }
 
     init(provider: any MetricsProviding = LocalMetricsProvider()) {
@@ -119,18 +100,12 @@ final class DashboardViewModel {
         pollingTask == nil ? start() : stop()
     }
 
-    /// Diagnostics: kills the monitoring process so the recovery path runs for
-    /// real. Nothing else changes — the sampling loop keeps running and simply
-    /// starts failing, which is the whole point.
     func simulateServiceCrash() {
         guard let provider = provider as? any CrashSimulating else { return }
         Log.xpc.notice("Diagnostics requested a monitoring service crash")
         Task { await provider.simulateCrash() }
     }
 
-    /// Refreshed by the topology panel while it is on screen. A failure here is
-    /// not an error state for the app — it means the service is down, which the
-    /// panel shows by clearing the peer rather than by throwing.
     func refreshServiceInfo() async {
         guard let provider = provider as? any ServiceIntrospectable else { return }
 
@@ -142,8 +117,6 @@ final class DashboardViewModel {
         }
     }
 
-    /// Structural rather than streaming — the panel that shows this refreshes
-    /// on its own slow cadence, not on the sampling loop.
     func refreshAddressSpaces() async {
         appAddressSpace = AddressSpaceSampler().sample()
 
@@ -177,7 +150,7 @@ final class DashboardViewModel {
             do {
                 try await Task.sleep(for: .seconds(sampleInterval))
             } catch {
-                return // cancelled while sleeping
+                return
             }
         }
     }
@@ -202,8 +175,6 @@ final class DashboardViewModel {
         let reason = error.localizedDescription
         Log.metrics.error("Snapshot failed: \(reason, privacy: .public)")
 
-        // A provider that isolates failure into another process is expected to
-        // come back; an in-process failure will not fix itself.
         if provider.source.isolatesFailure {
             connectionState = .recovering(reason)
             record(.serviceUnavailable, detail: reason)
@@ -228,10 +199,6 @@ final class DashboardViewModel {
 
     // MARK: - Lifecycle events
 
-    /// In Block A every event is raised by this process. Block B moves the
-    /// emitting side into the monitoring service and the background agent —
-    /// this listener is already wired for them, and drops the notifications it
-    /// posted itself so nothing is recorded twice.
     private func observeLifecycleEvents() {
         let center = DistributedNotificationCenter.default()
         let tokens = MonitoringEvent.allCases.map { event in
@@ -249,18 +216,11 @@ final class DashboardViewModel {
         eventObservers.store(tokens)
     }
 
-    /// Start and stop describe the monitoring process, so when that process is
-    /// the service it announces them itself and this app hears them over
-    /// `DistributedNotificationCenter`. Recording them here as well would log
-    /// every start twice — and the arriving notification is the proof the
-    /// cross-process event path actually works.
     private func recordLocalLifecycle(_ event: MonitoringEvent, detail: String? = nil) {
         guard !provider.source.isolatesFailure else { return }
         record(event, detail: detail)
     }
 
-    /// Records an event this process raised, and broadcasts it so the CLI and
-    /// the agent see it too.
     private func record(_ event: MonitoringEvent, detail: String? = nil) {
         append(event, detail: detail)
         MonitoringEventBus.post(event, detail: detail)
@@ -275,10 +235,6 @@ final class DashboardViewModel {
     }
 }
 
-
-/// Holds distributed-notification tokens and unregisters them when its owner
-/// deallocates. `deinit` on a `@MainActor` type cannot touch isolated state, so
-/// the tokens live out here instead.
 private final class DistributedObserverBox: @unchecked Sendable {
     private var tokens: [NSObjectProtocol] = []
 

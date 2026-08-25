@@ -1,21 +1,3 @@
-//
-//  main.swift
-//  macengine-cli
-//
-//  The second front door, from the outside.
-//
-//  This deliberately shares no code with the app. It speaks the diagnostic
-//  socket's text protocol over AF_UNIX and prints what comes back, which is
-//  the whole argument for having a text protocol: the client needs no wire
-//  types, no XPC interface, and no framework — `nc -U` is a valid client and
-//  so is this.
-//
-//  Scope worth stating plainly: this queries a service that is already
-//  running. It does not launch one. The monitoring service is a bundled XPC
-//  service owned by launchd on the app's behalf, so `status` answers while
-//  MacEngine is running and reports that it is not otherwise.
-//
-
 import Foundation
 
 let socketPath = "/tmp/macengine-diagnostic.sock"
@@ -52,8 +34,6 @@ enum ClientError: Error, CustomStringConvertible {
         case .noSocket:
             "no diagnostic socket at \(socketPath) — is MacEngine running?"
         case .refused(let code) where code == ECONNREFUSED:
-            // The node outlives the process that bound it, so "the file is
-            // there" and "someone is listening" are different questions.
             "\(socketPath) is stale — the monitoring service is not running"
         case .refused(let code):
             "could not connect to \(socketPath): \(String(cString: strerror(code)))"
@@ -63,9 +43,6 @@ enum ClientError: Error, CustomStringConvertible {
     }
 }
 
-/// One request, one reply, one connection. Reads until the service hangs up,
-/// which is how it signals the end of a reply — there is no length prefix
-/// because there is no need for one.
 func ask(_ verb: String) throws -> String {
     guard FileManager.default.fileExists(atPath: socketPath) else { throw ClientError.noSocket }
 
@@ -120,8 +97,6 @@ func ask(_ verb: String) throws -> String {
 
 // MARK: - Local process listing
 
-/// Formats what the Objective-C enumerator returned. The C API work lives in
-/// `ProcessEnumerator`; this is only presentation.
 func localProcesses(limit: Int = 10) -> String {
     let processes = ProcessEnumerator.topProcesses(byResidentSize: UInt(limit))
 

@@ -1,16 +1,3 @@
-//
-//  MonitoringService.swift
-//  MonitoringService
-//
-//  The object exported across the XPC connection. It owns no state of its own:
-//  every call is forwarded to the shared `MetricsCollector` actor, which is
-//  what keeps concurrent calls from several connections safe.
-//
-//  The protocol is @objc with reply blocks because that is what NSXPCConnection
-//  vends, so each method here is the small bridge from a completion handler to
-//  the actor's async interface.
-//
-
 import OSLog
 import Foundation
 
@@ -60,9 +47,6 @@ final class MonitoringService: NSObject, MonitoringServiceProtocol {
         }
     }
 
-    /// Walks this process's own VM regions. Cheap enough to answer inline —
-    /// a few hundred `mach_vm_region_recurse` calls — but it is still work the
-    /// app cannot do on the service's behalf, which is the reason it is here.
     func addressSpaceMap(withReply reply: @escaping (Data?, String?) -> Void) {
         do {
             reply(try JSONEncoder().encode(AddressSpaceSampler().sample()), nil)
@@ -86,9 +70,6 @@ final class MonitoringService: NSObject, MonitoringServiceProtocol {
 
     func simulateCrash() {
         Log.xpc.fault("simulateCrash() called - terminating monitoring service")
-        // No reply block by design: the process is gone before it could send
-        // one, which is precisely the failure the app has to survive. launchd
-        // relaunches the service on the next message sent to it.
         exit(EXIT_FAILURE)
     }
 }

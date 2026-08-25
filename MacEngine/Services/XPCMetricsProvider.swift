@@ -1,21 +1,3 @@
-//
-//  XPCMetricsProvider.swift
-//  MacEngine
-//
-//  Dials the monitoring service and satisfies the same `MetricsProviding` seam
-//  `LocalMetricsProvider` does, so nothing above this file knows the readings
-//  now come from another process.
-//
-//  Both directions are used, deliberately:
-//
-//    · push — the service sends a snapshot every interval over the reverse
-//      connection, which is what makes this bidirectional XPC rather than a
-//      request/response API. Pushed snapshots land in `pushed`.
-//    · pull — `snapshot()` serves the pushed value while it is fresh and
-//      otherwise asks outright. The pull path is what notices the service is
-//      gone, because a dead service cannot answer.
-//
-
 import OSLog
 import Foundation
 
@@ -28,15 +10,10 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
 
     private var pushed: MetricSnapshot?
     private var pushedAt: Date?
-    /// Counts snapshots that arrived unsolicited. A non-zero value is the only
-    /// direct evidence the reverse half of the connection is live.
     private(set) var pushesReceived = 0
 
     private var scanContinuation: AsyncStream<ScanUpdate>.Continuation?
 
-    /// Set from the interruption handler when the service dies. The next
-    /// `snapshot()` reports it once and rebuilds the connection, which is what
-    /// drives the dashboard's "Reconnecting" state.
     private var interruptionReason: String?
 
     // MARK: - MetricsProviding
@@ -50,8 +27,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
         do {
             try await beginMonitoring()
         } catch {
-            // Left for snapshot() to report; the service may simply need a
-            // relaunch, which the next message triggers.
             Log.xpc.error("Initial connect failed: \(error.localizedDescription, privacy: .public)")
         }
     }
@@ -78,7 +53,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
 
     func snapshot() async throws -> MetricSnapshot {
         if let reason = interruptionReason {
-            // Report the death once, then rebuild so the next call recovers.
             interruptionReason = nil
             teardown()
             throw MetricsProviderError.unavailable(reason)
@@ -88,16 +62,12 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
             return pushed
         }
 
-        // Either nothing has been pushed yet or the stream has gone quiet, so
-        // ask directly. This is also what relaunches a crashed service.
         if connection == nil || !isStarted {
             try await beginMonitoring()
         }
         return try await requestSnapshot()
     }
 
-    /// Health of the monitoring process itself. The pid in here is the honest
-    /// way to tell a recovered service from one that never died.
     func serviceInfo() async throws -> ServiceInfo {
         let connection = activeConnection()
 
@@ -126,8 +96,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
         }
     }
 
-    /// The service's own address space. Asking it to map itself is the only
-    /// unprivileged way to get this — see `MonitoringServiceProtocol`.
     func addressSpaceMap() async throws -> AddressSpaceMap {
         let connection = activeConnection()
 
@@ -211,8 +179,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
 
     // MARK: - Connection
 
-    /// Snapshots older than this are treated as a stalled stream rather than a
-    /// current reading. Two intervals of slack absorbs ordinary jitter.
     private var stalenessLimit: TimeInterval { Swift.max(sampleInterval * 2, 1.0) }
 
     private func beginMonitoring() async throws {
@@ -264,8 +230,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
         let connection = NSXPCConnection(serviceName: MonitoringIdentifiers.serviceName)
         connection.remoteObjectInterface = NSXPCInterface(with: (any MonitoringServiceProtocol).self)
 
-        // The app is the other half of the bidirectional link: it exports an
-        // object the service calls back into with each snapshot.
         connection.exportedInterface = NSXPCInterface(with: (any MonitoringClientProtocol).self)
         connection.exportedObject = SnapshotReceiver(
             onSnapshot: { [weak self] payload in
@@ -276,8 +240,8 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
             }
         )
 
-        // Interruption means the service died but the connection survives and
-        // will relaunch it. Invalidation means it is gone for good.
+        // Both handlers must be set before resume(), or the callback can be missed.
+        // Interruption: peer died, connection reusable. Invalidation: terminal.
         connection.interruptionHandler = { [weak self] in
             Task { await self?.noteFailure("Monitoring service stopped responding") }
         }
@@ -328,9 +292,6 @@ actor XPCMetricsProvider: MetricsProviding, CrashSimulating, WorkspaceScanning, 
     }
 }
 
-/// The app's half of the bidirectional interface. Explicitly `nonisolated`
-/// because this target defaults to `MainActor` isolation and XPC delivers on
-/// its own queue.
 nonisolated final class SnapshotReceiver: NSObject, MonitoringClientProtocol {
     private let onSnapshot: @Sendable (Data) -> Void
     private let onScanUpdate: @Sendable (Data) -> Void
@@ -352,9 +313,6 @@ nonisolated final class SnapshotReceiver: NSObject, MonitoringClientProtocol {
     }
 }
 
-/// NSXPCConnection promises to invoke either the reply block or the error
-/// handler, never both. A checked continuation traps if that promise is broken,
-/// so the resume is guarded rather than trusted.
 private nonisolated final class OneShot<T>: @unchecked Sendable {
     private let lock = NSLock()
     private var continuation: CheckedContinuation<T, Error>?

@@ -1,22 +1,8 @@
-//
-//  ProcessTopologyView.swift
-//  MacEngine
-//
-//  The architecture diagram, live. Every box is a real process with a real pid
-//  and every arrow is a transport that is either carrying traffic or not.
-//
-//  This is the panel that earns Engineer Mode: kill the service from
-//  Diagnostics and the peer box empties, the pid changes, and the push counter
-//  restarts — which is the whole resilience story visible in one place.
-//
-
 import SwiftUI
 
 struct ProcessTopologyView: View {
     @Bindable var model: DashboardViewModel
 
-    /// Slower than the sampling loop on purpose. Identity and uptime change
-    /// rarely, and each refresh is a real XPC round-trip.
     private static let refresh: Duration = .seconds(2)
 
     var body: some View {
@@ -48,8 +34,6 @@ struct ProcessTopologyView: View {
         .task { await pollServiceInfo() }
     }
 
-    /// One refresh loop for as long as the panel is on screen; `task` cancels it
-    /// when Engineer Mode is switched off or the tab changes.
     private func pollServiceInfo() async {
         while !Task.isCancelled {
             await model.refreshServiceInfo()
@@ -90,8 +74,6 @@ struct ProcessTopologyView: View {
                     .font(.engineBody)
                     .foregroundStyle(Theme.ink)
                 Spacer(minLength: 6)
-                // `Text` interpolation localises numbers, and a pid with a
-                // thousands separator in it is not a pid.
                 Text(verbatim: pid.map { "pid \($0)" } ?? "pid —")
                     .font(.diagnosticMono)
                     .foregroundStyle(isLive ? tint : Theme.inkTertiary)
@@ -131,8 +113,6 @@ struct ProcessTopologyView: View {
 
     // MARK: - Transports
 
-    /// Three mechanisms, and what each is actually carrying right now. The
-    /// point of listing them together is that they are not interchangeable.
     private var transports: some View {
         VStack(spacing: 0) {
             transport(

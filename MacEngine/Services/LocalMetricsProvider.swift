@@ -1,15 +1,3 @@
-//
-//  LocalMetricsProvider.swift
-//  MacEngine
-//
-//  Block A stand-in: samples the machine inside the app's own process.
-//
-//  This exists so the dashboard is real from day one, not so the app should
-//  ship this way — a crash in a sampler here takes the whole UI with it, which
-//  is exactly the problem the XPC service in Block B solves. The samplers
-//  themselves move across unchanged; only the provider is replaced.
-//
-
 import OSLog
 import Foundation
 
@@ -28,8 +16,6 @@ actor LocalMetricsProvider: MetricsProviding {
         guard !isRunning else { return }
         isRunning = true
         startedAt = Date()
-        // Prime the CPU counters so the first reported sample spans a real
-        // interval rather than all of uptime.
         cpuSampler.reset()
         _ = cpuSampler.sample()
         Log.metrics.info("Local sampling started at \(interval, format: .fixed(precision: 2))s")

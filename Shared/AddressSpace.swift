@@ -1,16 +1,3 @@
-//
-//  AddressSpace.swift
-//  Shared
-//
-//  A process's own address space, grouped. This is the honest version of the
-//  heap-and-stack diagram every OS course draws: same vocabulary, but the
-//  numbers come from `mach_vm_region_recurse` on a live task.
-//
-//  Only MacEngine's own two processes are mapped this way. Walking another
-//  process's regions needs `task_for_pid`, which needs root or the debugger
-//  entitlement, and the project deliberately has neither.
-//
-
 import Foundation
 
 nonisolated enum RegionKind: String, Codable, Sendable, CaseIterable, Identifiable {
@@ -59,16 +46,12 @@ nonisolated enum RegionKind: String, Codable, Sendable, CaseIterable, Identifiab
 nonisolated struct RegionGroup: Codable, Sendable, Equatable, Identifiable {
     let kind: RegionKind
     let regionCount: Int
-    /// Address space claimed.
     let virtualBytes: UInt64
-    /// Pages actually backed by physical memory right now.
     let residentBytes: UInt64
     let swappedBytes: UInt64
 
     var id: RegionKind { kind }
 
-    /// How much of the claim is real. The gap between the two is the point of
-    /// the whole panel.
     var residency: Double {
         guard virtualBytes > 0 else { return 0 }
         return (Double(residentBytes) / Double(virtualBytes)).clampedToUnitInterval
@@ -80,7 +63,6 @@ nonisolated struct AddressSpaceMap: Codable, Sendable, Equatable {
     let processName: String
     let sampledAt: Date
     let groups: [RegionGroup]
-    /// True when the walk hit its region cap before the address space ended.
     let wasTruncated: Bool
 
     var regionCount: Int { groups.reduce(0) { $0 + $1.regionCount } }
@@ -88,8 +70,6 @@ nonisolated struct AddressSpaceMap: Codable, Sendable, Equatable {
     var residentBytes: UInt64 { groups.reduce(0) { $0 &+ $1.residentBytes } }
     var swappedBytes: UInt64 { groups.reduce(0) { $0 &+ $1.swappedBytes } }
 
-    /// Groups worth drawing, largest resident first — resident rather than
-    /// virtual, because sorting by virtual just puts `reserved` on top forever.
     var significantGroups: [RegionGroup] {
         groups
             .filter { $0.regionCount > 0 }

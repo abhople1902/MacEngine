@@ -1,11 +1,3 @@
-//
-//  DiagnosticReportTests.swift
-//  MacEngineTests
-//
-//  The socket's wording, tested without a socket. This is the reason the text
-//  lives in `Shared` as a pure function rather than inside the listener.
-//
-
 import XCTest
 @testable import MacEngine
 
@@ -62,8 +54,6 @@ final class DiagnosticReportTests: XCTestCase {
         XCTAssertTrue(text.contains("4321"))
     }
 
-    /// A machine with no swap in use should not get a swap line at all —
-    /// "0 B of 0 B" reads like a fault rather than a healthy machine.
     func testSwapLineIsOmittedWhenSwapIsUnused() {
         let text = DiagnosticReport.status(info: info(), snapshot: snapshot(swapUsed: 0))
         XCTAssertFalse(text.contains("swap"))
@@ -78,8 +68,6 @@ final class DiagnosticReportTests: XCTestCase {
         XCTAssertEqual(DiagnosticReport.duration(3661), "01:01:01")
     }
 
-    /// Decimal units, matching the rest of the app rather than the binary
-    /// units a naive shift would produce.
     func testBytesUseDecimalUnits() {
         XCTAssertEqual(DiagnosticReport.bytes(2_500_000_000), "2.50 GB")
     }
@@ -93,16 +81,12 @@ final class DiagnosticReportTests: XCTestCase {
         XCTAssertTrue(DiagnosticVerb.allCases.allSatisfy { help.contains($0.rawValue) })
     }
 
-    /// `ServiceInfo` crosses XPC as JSON, so the socket path added for the
-    /// topology panel has to survive the round trip like everything else.
     func testServiceInfoCarriesTheSocketPathAcrossTheWire() throws {
         let encoded = try JSONEncoder().encode(info())
         let decoded = try JSONDecoder().decode(ServiceInfo.self, from: encoded)
         XCTAssertEqual(decoded.diagnosticSocketPath, "/tmp/macengine-diagnostic.sock")
     }
 
-    /// Absent is a real state: binding is allowed to fail, and a second app
-    /// instance deliberately does not steal a socket the first one owns.
     func testServiceInfoDecodesWhenNoSocketWasBound() throws {
         var withoutSocket = info()
         withoutSocket.diagnosticSocketPath = nil

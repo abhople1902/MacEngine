@@ -1,27 +1,9 @@
-//
-//  CPUHistoryChart.swift
-//  MacEngine
-//
-//  Swift Charts — part of the SDK, so the history view costs no dependency.
-//
-//  The x axis is a fixed-width window, not a fitted domain. For the first
-//  minute the axis stands still and the trace grows into it from the left;
-//  after that the window slides and the trace stays pinned to the right edge.
-//  A domain fitted to the samples would rescale on every tick, which makes a
-//  flat machine and a busy one look identical.
-//
-
 import Charts
 import SwiftUI
 
-/// The x-axis window, kept out of the view so it can be tested without one.
 nonisolated enum ChartWindow {
-    /// How much time the axis shows at once.
     static let length: TimeInterval = 60
 
-    /// Anchored to `first` until a full window has elapsed, then sliding so the
-    /// newest sample sits on the right edge. Either way the axis is exactly
-    /// `length` wide, which is the point.
     static func domain(first: Date?, last: Date?, now: @autoclosure () -> Date = Date()) -> ClosedRange<Date> {
         guard let first else {
             let start = now()
@@ -88,8 +70,6 @@ struct CPUHistoryChart: View {
             }
         }
         .chartXAxis {
-            // Fixed 15-second ticks: the window never changes width, so the
-            // labels should not change count either.
             AxisMarks(values: .stride(by: .second, count: 15)) { _ in
                 AxisGridLine().foregroundStyle(Theme.hairline)
                 AxisValueLabel(format: .dateTime.minute().second(), collisionResolution: .greedy)

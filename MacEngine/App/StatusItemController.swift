@@ -1,11 +1,3 @@
-//
-//  StatusItemController.swift
-//  MacEngine
-//
-//  The menu bar readout — a plain NSStatusItem with an NSMenu, driven from the
-//  same view model the SwiftUI window uses.
-//
-
 import AppKit
 
 @MainActor
@@ -67,10 +59,9 @@ final class StatusItemController {
         applyMenuBarAppearance()
     }
 
-    /// The window is pinned to dark, and `NSApp.appearance` is what pins it.
-    /// The status item is not ours to restyle, though — it sits in the user's
-    /// menu bar — so it opts back out to whatever the system is set to.
     private func applyMenuBarAppearance() {
+        // The app pins itself dark, but the status item must follow the system:
+        // dark text on a light menu bar is otherwise unreadable.
         let isDark = UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark"
         statusItem.button?.appearance = NSAppearance(named: isDark ? .darkAqua : .aqua)
     }
@@ -113,7 +104,6 @@ final class StatusItemController {
         onShowWindow()
     }
 
-    /// Monospaced digits so the menu bar does not shuffle on every tick.
     private static func title(for fraction: Double?) -> NSAttributedString {
         let text = fraction.map { " \($0.percentLabel)" } ?? " —"
         return NSAttributedString(

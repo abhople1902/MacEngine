@@ -1,8 +1,3 @@
-//
-//  BoundedTopKTests.swift
-//  MacEngineTests
-//
-
 import XCTest
 @testable import MacEngine
 

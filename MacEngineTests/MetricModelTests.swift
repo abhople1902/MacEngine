@@ -1,15 +1,7 @@
-//
-//  MetricModelTests.swift
-//  MacEngineTests
-//
-//  The arithmetic every reading passes through before it reaches the UI.
-//
-
 import XCTest
 @testable import MacEngine
 
 final class MetricModelTests: XCTestCase {
-
     // MARK: - CPU
 
     func testBusyFractionIsTheComplementOfIdle() {
@@ -55,8 +47,6 @@ final class MetricModelTests: XCTestCase {
         XCTAssertEqual(memory(usedFraction: 0.90).utilisationBand, .critical)
     }
 
-    /// Utilisation is not pressure. A machine can be nearly full and still be
-    /// fine, which is exactly what the kernel level is for.
     func testKernelPressureIsIndependentOfUtilisation() {
         XCTAssertEqual(memory(usedFraction: 0.95).utilisationBand, .critical)
         XCTAssertEqual(memory(usedFraction: 0.95).pressure, .normal)

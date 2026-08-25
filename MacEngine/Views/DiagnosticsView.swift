@@ -1,12 +1,3 @@
-//
-//  DiagnosticsView.swift
-//  MacEngine
-//
-//  The developer panel from the build plan. Killing the monitoring service is
-//  the demo the whole architecture exists to support, so it gets a button
-//  rather than a note in the README.
-//
-
 import SwiftUI
 
 struct DiagnosticsView: View {

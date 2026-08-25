@@ -1,16 +1,7 @@
-//
-//  MacEngineApp.swift
-//  MacEngine
-//
-//  Created by Ayush Bhople on 20/08/26.
-//
-
 import SwiftUI
 
 @main
 struct MacEngineApp: App {
-    // AppKit owns the app lifecycle: the delegate builds the menu bar item and
-    // holds the dashboard model that both the window and the status item read.
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {

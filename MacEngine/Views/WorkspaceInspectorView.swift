@@ -1,11 +1,3 @@
-//
-//  WorkspaceInspectorView.swift
-//  MacEngine
-//
-//  Answers the question every Mac developer has actually asked: where did my
-//  disk go, and what is the toolchain costing me right now.
-//
-
 import SwiftUI
 
 struct WorkspaceInspectorView: View {
@@ -149,7 +141,6 @@ struct WorkspaceInspectorView: View {
     }
 }
 
-/// One measured location, with its children revealed on demand.
 private struct SectionRow: View {
     let section: ScanSection
     let largest: UInt64

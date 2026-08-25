@@ -1,12 +1,3 @@
-//
-//  VMComposition.swift
-//  Shared
-//
-//  The stacked bar Engineer Mode draws, and the vocabulary that goes with it.
-//  Every segment is a state the Darwin VM actually keeps pages in, so the bar
-//  is a readout rather than an illustration.
-//
-
 import Foundation
 
 nonisolated enum VMPageState: String, Codable, Sendable, CaseIterable, Identifiable {
@@ -32,8 +23,6 @@ nonisolated enum VMPageState: String, Codable, Sendable, CaseIterable, Identifia
         }
     }
 
-    /// One sentence per state, because a bar with seven unexplained colours is
-    /// decoration and a bar with seven explained ones is a systems answer.
     var explanation: String {
         switch self {
         case .wired:
@@ -62,11 +51,6 @@ nonisolated struct VMSegment: Sendable, Equatable, Identifiable {
 }
 
 nonisolated extension MemoryMetrics {
-    /// The six counters plus their remainder, always summing to `totalBytes`.
-    ///
-    /// Showing the remainder rather than normalising it away is the point: the
-    /// counters are sampled independently and will not agree exactly, and
-    /// silently scaling them to fit would hide that.
     var composition: [VMSegment] {
         let named: [(VMPageState, UInt64)] = [
             (.wired, wiredBytes),
@@ -84,8 +68,6 @@ nonisolated extension MemoryMetrics {
             + [VMSegment(state: .unaccounted, bytes: remainder)]
     }
 
-    /// How much of installed RAM the named counters explain, 0...1. A value
-    /// far from 1 means the sample is not trustworthy.
     var compositionCoverage: Double {
         guard totalBytes > 0 else { return 0 }
         let accounted = composition

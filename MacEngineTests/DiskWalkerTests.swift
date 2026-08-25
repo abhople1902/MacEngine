@@ -1,12 +1,3 @@
-//
-//  DiskWalkerTests.swift
-//  MacEngineTests
-//
-//  Built against a real temporary tree rather than a mocked FileManager,
-//  because the behaviour worth testing — allocated size, roll-up, ordering —
-//  only exists on a real filesystem.
-//
-
 import XCTest
 @testable import MacEngine
 
@@ -52,8 +43,6 @@ final class DiskWalkerTests: XCTestCase {
 
     func testAllocatedSizeIsAtLeastTheLogicalSize() async throws {
         try makeFile("big.bin", bytes: 50_000)
-        // Allocated size rounds up to whole blocks, so it can exceed the logical
-        // size but must never be less.
         let measured = await DiskWalker.measure(root)
         XCTAssertGreaterThanOrEqual(measured.bytes, 50_000)
     }
@@ -80,9 +69,6 @@ final class DiskWalkerTests: XCTestCase {
     }
 
     func testConcurrencyDoesNotChangeTheResult() async throws {
-        // Sizes must differ by more than one allocation block, or they round
-        // to identical allocated sizes and the ordering assertion below is
-        // comparing ties — which sort() is free to break either way.
         for i in 0..<12 {
             try makeFile("dir\(i)/file.bin", bytes: (i + 1) * 40_000)
         }
@@ -94,11 +80,6 @@ final class DiskWalkerTests: XCTestCase {
         XCTAssertEqual(serial.children.map(\.name), parallel.children.map(\.name))
     }
 
-    /// Regression: `scan` hands every top-level child to `measure`, and the old
-    /// implementation opened a *directory* enumerator on each one — which
-    /// yields nothing at all for a plain file. Every file sitting directly in a
-    /// scanned folder was silently counted as zero. On this Mac that was 933
-    /// files and 546 MB, most of it the top level of ModuleCache.noindex.
     func testFilesDirectlyInTheRootAreCounted() async throws {
         try makeFile("loose.bin", bytes: 30_000)
         try makeFile("nested/deep.bin", bytes: 30_000)

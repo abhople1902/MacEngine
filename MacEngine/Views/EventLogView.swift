@@ -1,10 +1,3 @@
-//
-//  EventLogView.swift
-//  MacEngine
-//
-//  Lifecycle events received over DistributedNotificationCenter.
-//
-
 import SwiftUI
 
 struct EventLogView: View {

@@ -1,22 +1,9 @@
-//
-//  XPCIntegrationTests.swift
-//  MacEngineTests
-//
-//  These run against the real embedded service: the test host is MacEngine.app,
-//  so `NSXPCConnection(serviceName:)` resolves the .xpc bundle inside it and a
-//  second process really is launched. Nothing here is mocked, which is the
-//  point — the mocked version of this test could not fail for the reasons that
-//  matter.
-//
-
 import XCTest
 @testable import MacEngine
 
 final class XPCIntegrationTests: XCTestCase {
     private let interval: TimeInterval = 0.5
 
-    /// Polls until `condition` holds. Used instead of a fixed sleep because
-    /// process launch and XPC delivery have no guaranteed timing.
     private func waitUntil(
         _ description: String,
         timeout: TimeInterval = 15,
@@ -72,8 +59,6 @@ final class XPCIntegrationTests: XCTestCase {
         await provider.start(interval: interval)
         defer { Task { await provider.stop() } }
 
-        // The first service-side sample has no CPU baseline, so wait for one
-        // taken against a real interval.
         var processes: [ProcessSample] = []
         try await waitUntil("the service to report a process list") {
             processes = (try? await provider.snapshot())?.topProcesses ?? []
@@ -84,9 +69,6 @@ final class XPCIntegrationTests: XCTestCase {
         XCTAssertTrue(processes.allSatisfy { $0.pid > 0 && !$0.name.isEmpty })
     }
 
-    /// Exercises the whole scan path — request out, updates back over the
-    /// reverse channel — without measuring ten gigabytes in a unit test run.
-    /// The scan is cancelled as soon as it reports that it started.
     func testWorkspaceScanReportsProgressAndHonoursCancellation() async throws {
         let provider = XPCMetricsProvider()
         await provider.start(interval: interval)
@@ -124,9 +106,6 @@ final class XPCIntegrationTests: XCTestCase {
         await fulfillment(of: [cancelled], timeout: 15)
     }
 
-    /// The map has to come from the service's own walk. If this ever returned
-    /// the app's pid it would mean the app had found a way to read another
-    /// task's regions, which is exactly what the design says it cannot do.
     func testTheServiceMapsItsOwnAddressSpaceRatherThanTheApps() async throws {
         let provider = XPCMetricsProvider()
         await provider.start(interval: interval)
@@ -140,8 +119,6 @@ final class XPCIntegrationTests: XCTestCase {
         XCTAssertFalse(map.wasTruncated, "A healthy process should not hit the region cap")
     }
 
-    /// Each leg is stamped by whichever process performed it, so a populated
-    /// decode stamp is proof the snapshot really came from somewhere else.
     func testSnapshotsCarryTimingStampedOnBothSidesOfTheBoundary() async throws {
         let provider = XPCMetricsProvider()
         await provider.start(interval: interval)
@@ -154,7 +131,6 @@ final class XPCIntegrationTests: XCTestCase {
         }
 
         let stamped = try XCTUnwrap(timing)
-        // `presented` belongs to the view model, so the provider sees three.
         XCTAssertEqual(stamped.stages.map(\.name), ["collect", "encode + transit", "decode"])
         XCTAssertTrue(stamped.stages.allSatisfy { $0.seconds >= 0 })
         XCTAssertGreaterThan(stamped.collectEnded.timeIntervalSince(stamped.collectStarted), 0)
@@ -170,8 +146,6 @@ final class XPCIntegrationTests: XCTestCase {
 
         await provider.simulateCrash()
 
-        // The death must be surfaced, not silently papered over: the dashboard
-        // shows "Reconnecting" precisely because snapshot() throws here.
         try await waitUntil("the provider to report the service as unavailable") {
             do {
                 _ = try await provider.snapshot()
@@ -181,7 +155,6 @@ final class XPCIntegrationTests: XCTestCase {
             }
         }
 
-        // And then it must come back on its own, with no user action.
         try await waitUntil("snapshots to resume") {
             (try? await provider.snapshot()) != nil
         }
