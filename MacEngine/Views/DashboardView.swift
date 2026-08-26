@@ -1,9 +1,28 @@
 import SwiftUI
 
+enum DashboardTab: String, CaseIterable, Hashable {
+    case overview
+    case processes
+    case memory
+    case regions
+    case service
+
+    var dock: DockSection<DashboardTab> {
+        switch self {
+        case .overview: DockSection(tag: self, title: "Overview", symbol: "gauge.with.dots.needle.33percent")
+        case .processes: DockSection(tag: self, title: "Processes", symbol: "list.bullet.rectangle")
+        case .memory: DockSection(tag: self, title: "Memory", symbol: "memorychip")
+        case .regions: DockSection(tag: self, title: "Regions", symbol: "square.grid.3x3.topleft.filled")
+        case .service: DockSection(tag: self, title: "Service", symbol: "point.3.connected.trianglepath.dotted")
+        }
+    }
+}
+
 struct DashboardView: View {
     @Bindable var model: DashboardViewModel
 
     @AppStorage("engineerMode") private var engineerMode = false
+    @State private var tab: DashboardTab = .overview
 
     private var cpu: CPUMetrics { model.latest?.cpu ?? .zero }
     private var memory: MemoryMetrics { model.latest?.memory ?? .zero }
@@ -11,86 +30,137 @@ struct DashboardView: View {
     private var load: SystemLoad { SystemLoad.reading(model.latest) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+        VStack(spacing: 14) {
+            header
 
-                HStack(alignment: .top, spacing: 12) {
-                    MetricTileView(
-                        title: "CPU",
-                        value: cpu.busyFraction.percentLabel,
-                        caption: cpuCaption,
-                        fraction: cpu.busyFraction,
-                        tint: Theme.cpu
-                    )
-                    MetricTileView(
-                        title: "Memory",
-                        value: memory.usedBytes.byteLabel,
-                        caption: memoryCaption,
-                        fraction: memory.usedFraction,
-                        tint: Theme.memory
-                    )
-                    MetricTileView(
-                        title: "Disk",
-                        value: disk.usedFraction.percentLabel,
-                        caption: diskCaption,
-                        fraction: disk.usedFraction,
-                        tint: Theme.disk
-                    )
+            Group {
+                switch tab {
+                case .overview: overview
+                case .processes: processes
+                case .memory: memoryComposition
+                case .regions: regions
+                case .service: service
                 }
-
-                if engineerMode && model.canIntrospectService {
-                    DashboardSection("Process Topology") {
-                        ProcessTopologyView(model: model)
-                    }
-                }
-
-                if engineerMode {
-                    DashboardSection("Address Space") {
-                        AddressSpaceView(model: model)
-                    }
-                }
-
-                if engineerMode {
-                    DashboardSection("Sampling Pipeline") {
-                        PipelineView(timing: model.latest?.timing)
-                    }
-                }
-
-                if engineerMode {
-                    DashboardSection("Virtual Memory") {
-                        VMCompositionView(memory: memory)
-                    }
-                }
-
-                DashboardSection("CPU History") {
-                    CPUHistoryChart(
-                        snapshots: model.recentSnapshots,
-                        capacity: model.recentSnapshots.count,
-                        load: load
-                    )
-                }
-
-                DashboardSection("Top Processes") {
-                    ProcessListView(processes: model.latest?.topProcesses ?? [])
-                }
-
-                DashboardSection("Diagnostics") {
-                    DiagnosticsView(model: model)
-                }
-
-                DashboardSection("Lifecycle Events") {
-                    EventLogView(records: model.events)
-                }
-
-                footer
             }
-            .padding(18)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            footer
+
+            SectionDock(sections: DashboardTab.allCases.map(\.dock), selection: $tab, tint: load.tint)
         }
-        .scrollContentBackground(.hidden)
+        .padding(18)
         .toolbar { toolbarContent }
         .navigationTitle("MacEngine")
     }
+
+    // MARK: - Tabs
+
+    private var overview: some View {
+        VStack(spacing: 14) {
+            HStack(alignment: .top, spacing: 12) {
+                MetricTileView(
+                    title: "CPU",
+                    value: cpu.busyFraction.percentLabel,
+                    caption: cpuCaption,
+                    fraction: cpu.busyFraction,
+                    tint: Theme.cpu
+                )
+                MetricTileView(
+                    title: "Memory",
+                    value: memory.usedBytes.byteLabel,
+                    caption: memoryCaption,
+                    fraction: memory.usedFraction,
+                    tint: Theme.memory
+                )
+                MetricTileView(
+                    title: "Disk",
+                    value: disk.usedFraction.percentLabel,
+                    caption: diskCaption,
+                    fraction: disk.usedFraction,
+                    tint: Theme.disk
+                )
+            }
+
+            DashboardSection("CPU History", fills: true) {
+                CPUHistoryChart(
+                    snapshots: model.recentSnapshots,
+                    capacity: model.recentSnapshots.count,
+                    load: load
+                )
+            }
+        }
+    }
+
+    private var processes: some View {
+        DashboardSection("Top Processes", fills: true) {
+            ProcessListView(processes: model.latest?.topProcesses ?? [])
+        }
+    }
+
+    private var memoryComposition: some View {
+        DashboardSection("Virtual Memory", fills: true) {
+            if engineerMode {
+                VMCompositionView(memory: memory)
+            } else {
+                EngineerGate(
+                    what: "How the machine's memory is actually spent — wired, active, compressed, free — and what each state costs.",
+                    engineerMode: $engineerMode
+                )
+            }
+        }
+    }
+
+    private var regions: some View {
+        DashboardSection("Address Space", fills: true) {
+            if engineerMode {
+                AddressSpaceView(model: model)
+            } else {
+                EngineerGate(
+                    what: "The mapped regions of this app and of the monitoring service, grouped by what the kernel says they are.",
+                    engineerMode: $engineerMode
+                )
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var service: some View {
+        if engineerMode {
+            HStack(alignment: .top, spacing: 14) {
+                VStack(spacing: 14) {
+                    if model.canIntrospectService {
+                        DashboardSection("Process Topology") {
+                            ProcessTopologyView(model: model)
+                        }
+                    }
+                    DashboardSection("Diagnostics") {
+                        DiagnosticsView(model: model)
+                    }
+                    Spacer(minLength: 0)
+                }
+                VStack(spacing: 14) {
+                    DashboardSection("Sampling Pipeline") {
+                        PipelineView(timing: model.latest?.timing)
+                    }
+                    DashboardSection("Lifecycle Events") {
+                        EventLogView(records: model.events, limit: 5)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        } else {
+            VStack(spacing: 14) {
+                DashboardSection("Diagnostics") {
+                    DiagnosticsView(model: model)
+                }
+                DashboardSection("Lifecycle Events", fills: true) {
+                    EventLogView(records: model.events)
+                }
+            }
+        }
+    }
+
+    // MARK: - Chrome
 
     private var header: some View {
         HStack {
@@ -183,10 +253,12 @@ struct DashboardView: View {
 
 struct DashboardSection<Content: View>: View {
     private let title: String
+    private let fills: Bool
     private let content: Content
 
-    init(_ title: String, @ViewBuilder content: () -> Content) {
+    init(_ title: String, fills: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
+        self.fills = fills
         self.content = content()
     }
 
@@ -198,8 +270,9 @@ struct DashboardSection<Content: View>: View {
                 .textCase(.uppercase)
                 .kerning(1.2)
             content
+                .frame(maxHeight: fills ? .infinity : nil, alignment: .top)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, maxHeight: fills ? .infinity : nil, alignment: .topLeading)
         .padding(14)
         .panel()
     }

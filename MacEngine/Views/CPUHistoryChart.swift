@@ -53,12 +53,14 @@ struct CPUHistoryChart: View {
             .interpolationMethod(.monotone)
         }
         .chartYScale(domain: 0...1)
-        .chartXScale(domain: domain)
+        .chartXScale(domain: domain, range: .plotDimension(startPadding: 8, endPadding: 6))
         .chartPlotStyle { plot in
-            plot.background(Theme.sunk, in: .rect(cornerRadius: 8))
+            plot
+                .background(Theme.sunk, in: .rect(cornerRadius: 8))
+                .clipShape(.rect(cornerRadius: 8))
         }
         .chartYAxis {
-            AxisMarks(values: [0, 0.25, 0.5, 0.75, 1]) { value in
+            AxisMarks(position: .leading, values: [0, 0.25, 0.5, 0.75, 1]) { value in
                 AxisGridLine().foregroundStyle(Theme.hairline)
                 AxisValueLabel {
                     if let fraction = value.as(Double.self) {
@@ -78,7 +80,7 @@ struct CPUHistoryChart: View {
             }
         }
         .animation(.linear(duration: 0.2), value: snapshots.count)
-        .frame(height: 150)
+        .frame(minHeight: 120, maxHeight: .infinity)
         .overlay {
             if snapshots.isEmpty {
                 Text("Waiting for the first sample")

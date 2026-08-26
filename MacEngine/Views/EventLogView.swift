@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EventLogView: View {
     let records: [MonitoringEventRecord]
+    var limit: Int = 6
 
     var body: some View {
         if records.isEmpty {
@@ -12,7 +13,7 @@ struct EventLogView: View {
                 .padding(.vertical, 6)
         } else {
             VStack(alignment: .leading, spacing: 0) {
-                ForEach(records.prefix(6)) { record in
+                ForEach(records.prefix(limit)) { record in
                     HStack(spacing: 10) {
                         Image(systemName: record.event.symbolName)
                             .foregroundStyle(record.event.tint)
@@ -30,7 +31,7 @@ struct EventLogView: View {
                             .foregroundStyle(Theme.inkTertiary)
                     }
                     .padding(.vertical, 5)
-                    if record.id != records.prefix(6).last?.id {
+                    if record.id != records.prefix(limit).last?.id {
                         Divider()
                     }
                 }

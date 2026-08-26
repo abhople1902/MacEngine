@@ -12,7 +12,7 @@ struct ProcessListView: View {
                     .font(.metricCaption)
             }
             .foregroundStyle(Theme.inkSecondary)
-            .frame(height: 130)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             Table(processes) {
                 TableColumn("Process") { Text($0.name).lineLimit(1) }
@@ -23,7 +23,7 @@ struct ProcessListView: View {
                 TableColumn("Memory") { Text($0.memoryBytes.byteLabel).font(.diagnosticMono) }
                     .width(90)
             }
-            .frame(height: 180)
+            .frame(maxHeight: .infinity)
             .scrollContentBackground(.hidden)
             .background(Theme.sunk, in: .rect(cornerRadius: 8))
         }

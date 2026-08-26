@@ -22,7 +22,7 @@ nonisolated struct ClientChannel: @unchecked Sendable {
 
 actor MetricsCollector {
     private static let processRefreshInterval: TimeInterval = 1.0
-    private static let topProcessCount = 5
+    private static let topProcessCount = 12
 
     private let cpuSampler = CPUSampler()
     private let memorySampler = MemorySampler()
