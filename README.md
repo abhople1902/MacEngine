@@ -4,12 +4,20 @@ A macOS system monitor built as two processes on purpose. The window does not
 read a single kernel API — it holds an `NSXPCConnection` to an isolated service
 that does all the sampling, and the service pushes snapshots back.
 
-![Killing the monitoring service and watching it come back](Documentation/media/recovery.gif)
+[![MacEngine — the full walkthrough](Documentation/media/demo-poster.png)](Documentation/media/MacEngine.mp4)
 
-That is the whole point of the project, in one clip: the red button terminates
-the service process, the connection invalidates, the UI drops to a degraded
-state, launchd relaunches the service on the next message, and the dashboard
-resumes against a **new pid** — while the chart keeps its history.
+<!-- Click-through opens GitHub's own player for the file in this repo. For a
+     player embedded directly in this page instead, drag
+     Documentation/media/MacEngine.mp4 into any issue comment, copy the
+     https://github.com/user-attachments/assets/... URL it produces, and replace
+     the line above with:
+       <video src="THAT_URL" controls width="100%"></video>          -->
+
+The whole product in forty seconds: the sampling pipeline timing every stage
+from `host_statistics64` to the view model, the kernel's own memory
+composition, both processes' address spaces walked region by region, and two
+workspace scans resolving an Xcode project's DerivedData and measuring it with
+`fts(3)`. The only cuts are the file picker.
 
 ## What it does
 
@@ -21,6 +29,12 @@ not request/response.
 **Survives its own backend dying.** Kill the service from a button in the app.
 The connection invalidates, the UI shows degraded state, launchd relaunches on
 the next message, and metrics resume — typically within about five seconds.
+
+![Killing the monitoring service and watching it come back](Documentation/media/recovery.gif)
+
+The red button terminates the service process and the dashboard resumes against
+a **new pid** — while the chart keeps its history, because the history lives on
+the app side of the boundary.
 
 **Two transports, chosen deliberately.** Streaming metrics go over XPC. Lifecycle
 events go over `DistributedNotificationCenter`. Continuous data and rare state
@@ -105,12 +119,32 @@ if the CLI had imported the wire types, `nc` would not have been a valid client.
 
 ## Running it
 
+Requires **macOS 26.5** or later and **Xcode 26** — the deployment target is
+26.5 and the project uses file-system-synchronized groups, so an older Xcode
+will not open it.
+
 ```sh
 open MacEngine.xcodeproj      # scheme: MacEngine
 ```
 
-Engineer Mode is the `cpu` toggle in the toolbar; it turns on the topology,
-address-space, pipeline and VM-composition panels.
+### Getting around
+
+Two top-level tabs, **Dashboard** and **Workspace**, each divided into sections
+reachable from a dock at the bottom of the window. Nothing scrolls: every
+section is sized to fit, so a panel is either on screen in full or behind one
+click.
+
+| Dashboard | Workspace |
+| --- | --- |
+| **Overview** — CPU, memory and disk, plus 60 seconds of CPU history | **Summary** — totals, and where the scan looked |
+| **Processes** — top processes by footprint | **Breakdown** — every location, largest first |
+| **Memory** — the kernel's VM composition | **Reclaimable** — what is safe to delete |
+| **Regions** — address-space maps of both processes | **Toolchain** — Xcode's live processes |
+| **Service** — topology, pipeline timing, diagnostics, lifecycle events | |
+
+Engineer Mode is the `cpu` toggle in the toolbar. It is what fills the Memory,
+Regions and Service sections; with it off the app is an ordinary system monitor
+and those sections offer to turn it on.
 
 With the app running, the same service answers on the socket:
 
@@ -134,14 +168,19 @@ MacEngine.app/Contents/MacOS/MacEngine -scanPath ~/some/Project.xcodeproj
 xcodebuild -project MacEngine.xcodeproj -scheme MacEngine test
 ```
 
-107 tests. The unit tests cover the things with real logic — CPU tick-delta
-normalisation, VM page composition summing to installed RAM, bounded top-K
-selection, directory size roll-up, region classification, chart windowing. Two
-integration tests drive the real XPC boundary: a round trip returning a valid
-snapshot, and a reconnect-after-crash that asserts a snapshot arrives within a
-timeout. Five more drive the diagnostic socket with raw syscalls rather than the
-CLI's own client, so a protocol change that broke every other caller cannot pass
-by virtue of both sides sharing code.
+107 tests, a mix of XCTest and Swift Testing. The unit tests cover the things
+with real logic — CPU tick-delta normalisation, VM page composition summing to
+installed RAM, bounded top-K selection, directory size roll-up, region
+classification, chart windowing.
+
+Eight integration tests drive the real XPC boundary rather than a mock: a round
+trip returning a valid snapshot, a check that the pid answering is not the
+caller's, a reconnect-after-crash asserting the relaunched service is a *new*
+process, and a workspace scan that must report progress and honour cancellation.
+
+Four more drive the diagnostic socket with raw `socket`/`connect`/`write` calls
+instead of the CLI's own client — so a protocol change that broke every other
+caller cannot pass by virtue of both sides sharing code.
 
 ## Deliberate limits
 
@@ -184,5 +223,8 @@ keeps serving and the second reports no socket rather than silently stealing it.
 | `MonitoringService/` | The XPC service: sampling loop, workspace scanner |
 | `Shared/` | Wire types and samplers, compiled into both targets |
 | `macengine-cli/` | The socket client, plus the Objective-C process enumerator |
-| `MacEngineTests/` | Unit tests plus the XPC integration tests |
-| `Documentation/` | Build plan, Darwin API console, Instruments write-up |
+| `MacEngineTests/` | Unit tests plus the XPC and socket integration tests |
+| `MacEngineUITests/` | Launch and smoke tests driven through XCUITest |
+| `Documentation/` | Build plan, Darwin API console, Instruments write-up, media |
+
+MIT licensed — see [LICENSE](LICENSE).

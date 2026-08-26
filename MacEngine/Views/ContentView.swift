@@ -15,7 +15,7 @@ struct ContentView: View {
                 WorkspaceInspectorView(model: inspector)
             }
         }
-        .frame(minWidth: 680, minHeight: 600)
+        .frame(minWidth: 1120, minHeight: 700)
         .font(.engineBody)
         .foregroundStyle(Theme.ink)
         .tint(load.tint)

@@ -1,13 +1,31 @@
 import SwiftUI
 
+enum WorkspaceTab: String, CaseIterable, Hashable {
+    case summary
+    case breakdown
+    case reclaimable
+    case toolchain
+
+    var dock: DockSection<WorkspaceTab> {
+        switch self {
+        case .summary: DockSection(tag: self, title: "Summary", symbol: "square.text.square")
+        case .breakdown: DockSection(tag: self, title: "Breakdown", symbol: "list.bullet.indent")
+        case .reclaimable: DockSection(tag: self, title: "Reclaimable", symbol: "trash")
+        case .toolchain: DockSection(tag: self, title: "Toolchain", symbol: "hammer")
+        }
+    }
+}
+
 struct WorkspaceInspectorView: View {
     @Bindable var model: WorkspaceInspectorViewModel
 
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
+    @State private var tab: WorkspaceTab = .summary
 
+    var body: some View {
+        VStack(spacing: 14) {
+            header
+
+            Group {
                 switch model.state {
                 case .idle where model.scan == nil:
                     emptyState
@@ -15,21 +33,19 @@ struct WorkspaceInspectorView: View {
                     failure(reason)
                 default:
                     if let scan = model.scan {
-                        totals(scan)
-                        DashboardSection("Where it went") {
-                            breakdown(scan)
-                        }
-                        DashboardSection("Toolchain, right now") {
-                            ToolchainView(footprint: scan.toolchain)
-                        }
+                        results(scan)
                     } else {
                         emptyState
                     }
                 }
             }
-            .padding(18)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+            if model.scan != nil {
+                SectionDock(sections: WorkspaceTab.allCases.map(\.dock), selection: $tab, tint: Theme.memory)
+            }
         }
-        .scrollContentBackground(.hidden)
+        .padding(18)
         .navigationTitle("Workspace")
     }
 
@@ -83,7 +99,7 @@ struct WorkspaceInspectorView: View {
                 Button("Choose Project…") { model.chooseWorkspace() }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 260)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func failure(_ reason: String) -> some View {
@@ -94,7 +110,30 @@ struct WorkspaceInspectorView: View {
             .panel(cornerRadius: 10)
     }
 
-    // MARK: - Results
+    // MARK: - Tabs
+
+    @ViewBuilder
+    private func results(_ scan: WorkspaceScan) -> some View {
+        switch tab {
+        case .summary:
+            VStack(spacing: 14) {
+                totals(scan)
+                DashboardSection("Scan Detail", fills: true) {
+                    detail(scan)
+                }
+            }
+        case .breakdown:
+            DashboardSection("Where It Went", fills: true) {
+                scrolling { breakdown(scan.sections, largest: scan.sections.map(\.node.byteCount).max() ?? 1) }
+            }
+        case .reclaimable:
+            reclaimable(scan)
+        case .toolchain:
+            DashboardSection("Toolchain, Right Now", fills: true) {
+                ToolchainView(footprint: scan.toolchain)
+            }
+        }
+    }
 
     private func totals(_ scan: WorkspaceScan) -> some View {
         HStack(alignment: .top, spacing: 12) {
@@ -122,22 +161,104 @@ struct WorkspaceInspectorView: View {
         }
     }
 
-    private func breakdown(_ scan: WorkspaceScan) -> some View {
-        let largest = scan.sections.map(\.node.byteCount).max() ?? 1
+    private func detail(_ scan: WorkspaceScan) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            detailRow("Project", scan.workspacePath)
+            Divider().overlay(Theme.hairline)
+            detailRow("DerivedData", scan.derivedDataPath ?? "Not resolved — Xcode has not built this project yet")
+            Divider().overlay(Theme.hairline)
+            detailRow("Largest", largestLabel(scan))
+            Divider().overlay(Theme.hairline)
+            detailRow("Started", scan.startedAt.formatted(date: .abbreviated, time: .standard))
+            Divider().overlay(Theme.hairline)
+            detailRow("Walk time", "\(scan.duration.formatted(.number.precision(.fractionLength(2))))s · fts(3), \(fileCount(scan)) files")
+            Spacer(minLength: 0)
+        }
+    }
 
-        return VStack(spacing: 0) {
-            ForEach(scan.sections) { section in
+    private func detailRow(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text(title)
+                .font(.metricCaption)
+                .foregroundStyle(Theme.inkSecondary)
+                .frame(width: 92, alignment: .leading)
+            Text(value)
+                .font(.diagnosticMono)
+                .foregroundStyle(Theme.ink)
+                .lineLimit(1)
+                .truncationMode(.middle)
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 8)
+    }
+
+    private func largestLabel(_ scan: WorkspaceScan) -> String {
+        guard let largest = scan.sections.max(by: { $0.node.byteCount < $1.node.byteCount }) else {
+            return "—"
+        }
+        return "\(largest.node.name) · \(largest.node.byteCount.byteLabel)"
+    }
+
+    private func fileCount(_ scan: WorkspaceScan) -> Int {
+        scan.sections.reduce(0) { $0 + $1.node.fileCount }
+    }
+
+    @ViewBuilder
+    private func reclaimable(_ scan: WorkspaceScan) -> some View {
+        let sections = scan.sections.filter(\.isReclaimable)
+
+        if sections.isEmpty {
+            DashboardSection("Reclaimable", fills: true) {
+                Text("Nothing here is safe to delete — none of the measured locations are caches or build output.")
+                    .font(.metricCaption)
+                    .foregroundStyle(Theme.inkTertiary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+        } else {
+            VStack(spacing: 14) {
+                DashboardSection("Free Without Losing Work") {
+                    HStack(alignment: .center, spacing: 16) {
+                        Text(scan.reclaimableBytes.byteLabel)
+                            .font(.metricFigure(30))
+                            .foregroundStyle(Theme.amber)
+                        Text("Caches and build output across \(sections.count) locations. Xcode regenerates every byte of it — the cost of deleting is the next build, not your work.")
+                            .font(.metricCaption)
+                            .foregroundStyle(Theme.inkTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                DashboardSection("What Would Go", fills: true) {
+                    scrolling { breakdown(sections, largest: sections.map(\.node.byteCount).max() ?? 1) }
+                }
+            }
+        }
+    }
+
+    private func breakdown(_ sections: [ScanSection], largest: UInt64) -> some View {
+        VStack(spacing: 0) {
+            ForEach(sections) { section in
                 SectionRow(
                     section: section,
                     largest: largest,
                     isExpanded: model.expanded.contains(section.node.id),
                     onToggle: { model.toggle(section.node) }
                 )
-                if section.id != scan.sections.last?.id {
+                if section.id != sections.last?.id {
                     Divider()
                 }
             }
         }
+    }
+
+    private func scrolling<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ScrollView {
+            content()
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollContentBackground(.hidden)
+        .frame(maxHeight: .infinity)
     }
 }
 

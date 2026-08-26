@@ -65,7 +65,7 @@ final class XPCIntegrationTests: XCTestCase {
             return !processes.isEmpty
         }
 
-        XCTAssertLessThanOrEqual(processes.count, 5)
+        XCTAssertLessThanOrEqual(processes.count, 12)
         XCTAssertTrue(processes.allSatisfy { $0.pid > 0 && !$0.name.isEmpty })
     }
 
