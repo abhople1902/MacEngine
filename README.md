@@ -4,20 +4,11 @@ A macOS system monitor built as two processes on purpose. The window does not
 read a single kernel API — it holds an `NSXPCConnection` to an isolated service
 that does all the sampling, and the service pushes snapshots back.
 
-[![MacEngine — the full walkthrough](Documentation/media/demo-poster.png)](Documentation/media/MacEngine.mp4)
+![MacEngine's Service section — both processes, the pipeline timed stage by stage, and the socket listening](Documentation/media/dashboard-service.gif)
 
-<!-- Click-through opens GitHub's own player for the file in this repo. For a
-     player embedded directly in this page instead, drag
-     Documentation/media/MacEngine.mp4 into any issue comment, copy the
-     https://github.com/user-attachments/assets/... URL it produces, and replace
-     the line above with:
-       <video src="THAT_URL" controls width="100%"></video>          -->
-
-The whole product in forty seconds: the sampling pipeline timing every stage
-from `host_statistics64` to the view model, the kernel's own memory
-composition, both processes' address spaces walked region by region, and two
-workspace scans resolving an Xcode project's DerivedData and measuring it with
-`fts(3)`. The only cuts are the file picker.
+That is the whole thesis in one panel: two pids, a connection between them, and
+every number on screen having crossed it. The rest of this page walks the app
+section by section — every clip is the real thing, recorded in one sitting.
 
 ## What it does
 
@@ -62,6 +53,84 @@ the actual syscall — Foundation was allocating a CFURL and bridging an
 NSDictionary per file to read one integer. Replacing it with `fts(3)` cut user
 CPU by 80% and, incidentally, uncovered 546 MB the old walker had been silently
 dropping. Full numbers in [Documentation/instruments.md](Documentation/instruments.md).
+
+## Walkthrough
+
+Two top-level tabs, **Dashboard** and **Workspace**, each split into sections
+reachable from a dock at the bottom of the window. Nothing scrolls — every
+section is sized to fit, so a panel is either on screen in full or one click
+away. Engineer Mode is the `cpu` toggle in the toolbar: it is what fills the
+Memory, Regions and Service sections, and with it off the app is an ordinary
+system monitor and those sections offer to switch it on.
+
+### Dashboard
+
+**Overview** — CPU, memory and disk as they stand, plus sixty seconds of CPU
+history. The chart's samples live on the app side of the XPC boundary, which is
+why the history survives the service being killed.
+
+![The Overview section](Documentation/media/dashboard-overview.gif)
+
+**Processes** — what the service found walking the process table with
+`proc_listpids` and `proc_pid_rusage`, narrowed by a bounded top-K heap before
+anything crosses the wire, with pid, CPU share and memory footprint.
+
+![The Processes section](Documentation/media/dashboard-processes.gif)
+
+**Memory** — gated behind Engineer Mode, because a single "memory used" number
+is a lie. Switching it on replaces that number with what the kernel actually
+tracks — wired, active, inactive, speculative, compressed, free and the
+unaccounted remainder — beside `kern.memorystatus_vm_pressure_level`, so a full
+page cache does not read as pressure.
+
+![The Memory section, with Engineer Mode being switched on](Documentation/media/dashboard-memory.gif)
+
+**Regions** — `mach_vm_region_recurse` walking the app's and the service's own
+address spaces side by side, classified into text, mapped files, heap, stack
+and reserved. The enormous reserved figure is `VM_PROT_NONE` mappings holding
+zero resident pages, which is exactly why reserved and resident are shown as
+separate columns.
+
+![The Regions section](Documentation/media/dashboard-regions.gif)
+
+**Service** — the boundary itself. Both processes and their pids, the sampling
+pipeline timed stage by stage from `host_statistics64` to the view model, the
+diagnostic socket's listening state, and the lifecycle events that arrived over
+`DistributedNotificationCenter`. The red button terminates the service; see
+[above](#what-it-does) for what happens next.
+
+![The Service section](Documentation/media/dashboard-service.gif)
+
+### Workspace
+
+**Starting a scan** — point it at an `.xcodeproj` or `.xcworkspace`. The service
+resolves the DerivedData folder Xcode keeps for that project and walks every
+location it owns, reporting progress as it goes and staying cancellable
+throughout. (The file picker is cut from the clip.)
+
+![Choosing a project and watching the scan run](Documentation/media/workspace-scan.gif)
+
+**Summary** — the totals, and the provenance behind them: which project, which
+DerivedData directory, the largest single location, and how long the walk took
+for how many files.
+
+![The Summary section](Documentation/media/workspace-summary.gif)
+
+**Breakdown** — every location that contributed, largest first, expandable down
+to the individual simulator devices and caches underneath it.
+
+![The Breakdown section](Documentation/media/workspace-breakdown.gif)
+
+**Reclaimable** — the subset that is safe to delete, with the reason each entry
+qualifies. Caches and build output regenerate; source, archives and anything
+Xcode cannot rebuild are not on this list.
+
+![The Reclaimable section](Documentation/media/workspace-reclaimable.gif)
+
+**Toolchain** — Xcode's own processes and what they cost right now, so the disk
+number sits next to the thing producing it.
+
+![The Toolchain section](Documentation/media/workspace-toolchain.gif)
 
 ## Architecture
 
@@ -126,25 +195,6 @@ will not open it.
 ```sh
 open MacEngine.xcodeproj      # scheme: MacEngine
 ```
-
-### Getting around
-
-Two top-level tabs, **Dashboard** and **Workspace**, each divided into sections
-reachable from a dock at the bottom of the window. Nothing scrolls: every
-section is sized to fit, so a panel is either on screen in full or behind one
-click.
-
-| Dashboard | Workspace |
-| --- | --- |
-| **Overview** — CPU, memory and disk, plus 60 seconds of CPU history | **Summary** — totals, and where the scan looked |
-| **Processes** — top processes by footprint | **Breakdown** — every location, largest first |
-| **Memory** — the kernel's VM composition | **Reclaimable** — what is safe to delete |
-| **Regions** — address-space maps of both processes | **Toolchain** — Xcode's live processes |
-| **Service** — topology, pipeline timing, diagnostics, lifecycle events | |
-
-Engineer Mode is the `cpu` toggle in the toolbar. It is what fills the Memory,
-Regions and Service sections; with it off the app is an ordinary system monitor
-and those sections offer to turn it on.
 
 With the app running, the same service answers on the socket:
 
