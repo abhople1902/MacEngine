@@ -1,3 +1,5 @@
+![MacEngine — a macOS system monitor, built as two processes](Documentation/media/header.png)
+
 # MacEngine
 
 A macOS system monitor built as two processes on purpose. The window does not
